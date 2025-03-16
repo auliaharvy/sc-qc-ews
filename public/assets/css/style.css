@@ -95,6 +95,10 @@ body {
   background-color: #ff6384;
 }
 
+.bg-yellow {
+    background-color: #edd405 !important;
+  }
+
 .float-label {
   display: flex;
   align-items: center;

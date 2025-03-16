@@ -142,6 +142,25 @@
             <div class="row mt-2">
                 <div class="col-md-6">
                     <div class="form-group">
+                        <label for="supplier">
+                            Supplier
+                        </label>
+                        <select class="form-select select2 @error('supplier') is-invalid @enderror" id="supplier"
+                            name="supplier" @required(true)>
+                            <option value=""></option>
+                            @foreach (getSupplier() as $supplier)
+                                <option value="{{ $supplier->id }}" {{ old('supplier') == $supplier->id ? 'selected' : '' }}>
+                                    {{ $supplier->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('supplier')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
                         <label for="alamat">
                             Alamat
                         </label>

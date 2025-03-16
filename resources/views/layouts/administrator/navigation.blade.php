@@ -1,6 +1,6 @@
 <nav class="main-sidebar ps-menu">
     <div class="sidebar-header">
-        <div class="text">Administrator</div>
+        <div class="text"><img src="{{ asset('assets/images/sc-logo.png') }}" alt="EWS Logo" style="width: 100%; height: auto;"></div>
         <div class="close-sidebar action-toggle">
             <i class="ti-close"></i>
         </div>
@@ -13,9 +13,17 @@
                     <span>Dashboard</span>
                 </a>
             </li>
+            <li class="{{ request()->routeIs('daily-check-sheet') ? 'active' : '' }}">
+                <a href="{{ route('daily-check-sheet') }}" class="link">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Daily Checksheet</span>
+                </a>
+            </li>
+            @can('read users')
             <li class="menu-category">
                 <span class="text-uppercase">User Interface</span>
             </li>
+            @endcan
 
             @foreach (getMenus() as $menu)
                 @can('read ' . $menu->url)

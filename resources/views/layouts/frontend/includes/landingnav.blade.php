@@ -33,7 +33,7 @@
     <div class="menu-wrap">
         <a href="#home">
             <div class="logo">
-                Bootstrap
+                Sugity
             </div>
         </a>
 
@@ -73,11 +73,11 @@
                         Sign In
                     </div>
                 </a>
-                <a href="{{ route('register') }}">
+                {{-- <a href="{{ route('register') }}">
                     <div class="menu-item">
                         Sign up
                     </div>
-                </a>
+                </a> --}}
             @endauth
         </div>
 

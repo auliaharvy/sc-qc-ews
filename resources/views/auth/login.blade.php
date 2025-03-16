@@ -13,6 +13,8 @@
                         <div class="col-md-8 mb-2 mx-auto">
                             <p1>Welcome!</p1>
                             <br>
+                            <p1>Sugity Creative QC Early Warning System</p1>
+                            <br>
                             <p style="color:#245953">
                                 Please log in your correct credentials.
                             </p>
@@ -81,7 +83,7 @@
                             </div>
 
                             <!-- register -->
-                            <div class="form-group row">
+                            {{-- <div class="form-group row">
                                 <div class="col-md-12">
                                     <div class="form-check">
                                         <a href="{{ route('register') }}">
@@ -89,7 +91,7 @@
                                         </a>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
                     </div>
                 </form>

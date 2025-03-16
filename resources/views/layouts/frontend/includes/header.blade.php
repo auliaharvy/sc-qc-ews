@@ -2,7 +2,7 @@
     <div class="container-fluid">
 
         <a class="navbar-brand" href="#">
-            <p1><b>Bootstrap</b></p1>
+            <p1><b>SQ QC EWS</b></p1>
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"

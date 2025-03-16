@@ -109,6 +109,10 @@ html {
     background-repeat: no-repeat;
 }
 
+.bg-yellow {
+    background-color: #edd405 !important;
+  }
+
 .bg-img-fixed {
     background-attachment: fixed;
 }

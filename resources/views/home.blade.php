@@ -1,417 +1,416 @@
 @extends('layouts.administrator.master')
 
 @push('css')
-    <link rel="stylesheet" href="{{ asset('vendor/chart.js/Chart.min.css') }}">
+    <style>
+        #dateFilter {
+            max-width: 200px;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+            border: 1px solid #ced4da;
+        }
+    </style>
+    <style>
+        #card-statistik-hari-ini {
+            min-height: 50px; /* Sesuaikan tinggi minimum sesuai kebutuhan */
+            transition: transform 0.3s ease;
+        }
+        #card-statistik-hari-ini:hover {
+            transform: translateY(-5px);
+        }
+        #card-statistik-hari-ini-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .chart-container {
+            min-height: 100px;
+            max-height: 600px;
+        }
+    </style>
 @endpush
 
 @section('content')
     <div class="content-wrapper">
         <div class="row same-height">
-            <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">
-                        <h4>Monthly Sales</h4>
+                    <div class="card-header bg-primary text-white text-center">
+                        <h5 class="text-white">VISUALISASI SUPPLIER </h5>
+                        <div id="realtime-date" class="h6 text-white"></div>
                     </div>
                     <div class="card-body">
-                        <canvas id="myChart" height="642" width="1388"></canvas>
+                        <div class="card-body">
+                            <div class="mt-2">
+                                <div class="row text-center ">
+                                    @foreach($tableQuality as $data)
+                                    <div class="col-3 mt-3">
+                                        <a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data->supplier_id, 'production_date' => $data->production_date]) }}" style="text-decoration: none; color: inherit;">
+                                        <div id="card-statistik-hari-ini" class="card {{ $data->judgement == 'NG' ? 'bg-danger' : ($data->judgement == 'Good' ? 'bg-success' : 'bg-warning') }}">
+                                            <div id="card-statistik-hari-ini-body" class="card-body p-2">
+                                                {{-- <div class="text-muted small">Total</div> --}}
+                                                <div class="h6 text-white">{{ $data->supplier_name }}</div>
+                                            </div>
+                                        </div>
+                                        </a>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                {{-- <h6 class="text-center">Legend</h6> --}}
+                                <div class="d-flex justify-content-center">
+                                    <div class="me-3">
+                                        <span class="badge bg-warning text-warning">-</span> Belum Submit
+                                    </div>
+                                    <div class="me-3">
+                                        <span class="badge bg-success text-success">-</span> Ok
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-danger text-danger">-</span> NG
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Statistics</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="progress-wrapper">
-                            <h4>Progress 25%</h4>
-                            <div class="progress progress-bar-small">
-                                <div class="progress-bar progress-bar-small" style="width: 25%" role="progressbar"
-                                    aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="progress-wrapper">
-                            <h4>Progress 45%</h4>
-                            <div class="progress progress-bar-small">
-                                <div class="progress-bar progress-bar-small bg-pink" style="width: 45%" role="progressbar"
-                                    aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">
-                                </div>
-                            </div>
-                        </div>
-                        <canvas id="myChart2" height="842" width="1388"></canvas>
 
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="content-wrapper">
-        <div class="row same-height">
-            <div class="col-md-8">
                 <div class="card">
-                    <div class="header-statistics">
-                        <h5>Monthly Statistics</h5>
-                        <p>Based On Major Browser</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table small-font table-striped table-hover table-sm">
+                    < class="card-body">
+                        <div class="card-header bg-warning text-white text-center">
+                            <form method="GET" action="{{ request()->url() }}" id="dateFilterForm">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h4 class="mb-0 text-white text-center">Quality Early Warning System</h4>
+                                    <input type="date"
+                                        name="filter_date"
+                                        id="filterDate"
+                                        class="form-control w-25"
+                                        value="{{ request('filter_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d')) }}"
+
+                                        onchange="document.getElementById('dateFilterForm').submit()">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="table-responsive m">
+                            <table class="table table-bordered">
+                                <thead class="thead-dark">
+                                    <tr class="bg-warning text-white text-center">
+                                        <th class="text-white">NO</th>
+                                        <th class="text-white">SUPPLIER</th>
+                                        <th class="text-white">OK RATIO</th>
+                                        <th class="text-white">NG RATIO</th>
+                                        <th class="text-white">JUDGEMENT</th>
+                                        <th class="text-white">PART NAME</th>
+                                        <th class="text-white">PROBLEM</th>
+                                        <th class="text-white">ACTION</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
-                                    <tr>
-                                        <th scope="row">1</th>
-                                        <td>Google Chrome</td>
-                                        <td>5120</td>
-                                        <td><i class="fa fa-caret-up text-success"></i></td>
-
+                                    @forelse($tableQuality as $data)
+                                    <tr class="{{ $data->judgement == 'NG' ? 'table-danger' : '' }}">
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $data->supplier_name }}</td> <!-- Assuming supplier name is stored in supplier_name -->
+                                        <td>{{ $data->oke_ratio }}</td> <!-- Assuming the correct property name is oke_ratio -->
+                                        <td>{{ $data->ng_ratio }}</td>
+                                        <td>{{ $data->judgement }}</td>
+                                        <td>{{ $data->part_name }}</td>
+                                        <td>{{ $data->problem ?? '-' }}</td>
+                                        <td><a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data->supplier_id, 'production_date' => $data->production_date]) }}" class="edit btn btn-warning btn-sm me-2"><i class="fa fa-eye"></i></a></td>
                                     </tr>
+                                    @empty
                                     <tr>
-                                        <th scope="row">2</th>
-                                        <td>Mozilla Firefox</td>
-                                        <td>4000</td>
-                                        <td><i class="fa fa-caret-up text-success"></i></td>
-
+                                        <td colspan="9" class="text-center py-4">No Daily Checksheet Submited</td>
                                     </tr>
-                                    <tr>
-                                        <th scope="row">3</th>
-                                        <td>Safari</td>
-                                        <td>8800</td>
-                                        <td><i class="fa fa-caret-down text-danger"></i></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">3</th>
-                                        <td>Opera Mini</td>
-                                        <td>4123</td>
-                                        <td><i class="fa fa-caret-up text-success"></i></td>
-                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Interest</h4>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="myChart3" height="842" width="1388"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="content-wrapper">
-        <div class="row same-height">
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div id="apex-chart"></div>
-                    </div>
-                </div>
-                <br>
-                <div class="card">
-                    <span></span>
 
-                    <div class="card-body">
-                        <div id="apex-chart-bar"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Activities</h4>
-                    </div>
-                    <div class="card-body">
-                        <ul class="timeline-xs">
-                            <li class="timeline-item success">
-                                <div class="margin-left-15">
-                                    <div class="text-muted text-small">
-                                        2 minutes ago
-                                    </div>
-                                    <p>
-                                        <a class="text-info" href="">
-                                            Bambang
-                                        </a>
-                                        has completed his account.
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="timeline-item">
-                                <div class="margin-left-15">
-                                    <div class="text-muted text-small">
-                                        12:30
-                                    </div>
-                                    <p>
-                                        Staff Meeting
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="timeline-item danger">
-                                <div class="margin-left-15">
-                                    <div class="text-muted text-small">
-                                        11:11
-                                    </div>
-                                    <p>
-                                        Completed new layout.
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="timeline-item info">
-                                <div class="margin-left-15">
-                                    <div class="text-muted text-small">
-                                        Thu, 12 Jun
-                                    </div>
-                                    <p>
-                                        Contacted
-                                        <a class="text-info" href="">
-                                            Microsoft
-                                        </a>
-                                        for license upgrades.
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="timeline-item">
-                                <div class="margin-left-15">
-                                    <div class="text-muted text-small">
-                                        Tue, 10 Jun
-                                    </div>
-                                    <p>
-                                        Started development new site
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="timeline-item">
-                                <div class="margin-left-15">
-                                    <div class="text-muted text-small">
-                                        Sun, 11 Apr
-                                    </div>
-                                    <p>
-                                        Lunch with
-                                        <a class="text-info" href="">
-                                            Mba Inem
-                                        </a>
-                                        .
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="timeline-item warning">
-                                <div class="margin-left-15">
-                                    <div class="text-muted text-small">
-                                        Wed, 25 Mar
-                                    </div>
-                                    <p>
-                                        server Maintenance.
-                                    </p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Chat</h4>
-                    </div>
-                    <div class="card-body small-padding">
-                        <div class="panel-discussion ps-chat">
-                            <ol class="discussion">
-                                <li class="messages-date">
-                                    Sunday, Feb 9, 12:58
-                                </li>
-                                <li class="self">
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mas Bambang
-                                        </div>
-                                        <div class="message-text">
-                                            Hi, Mba Inem
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar2.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mba Inem
-                                        </div>
-                                        <div class="message-text">
-                                            How are you?
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar2.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="other">
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mba Inem
-                                        </div>
-                                        <div class="message-text">
-                                            Hi, i am good
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar2.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="self">
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mas Bambang
-                                        </div>
-                                        <div class="message-text">
-                                            Glad to see you ;)
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar1.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="messages-date">
-                                    Sunday, Feb 9, 13:10
-                                </li>
-                                <li class="other">
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mba Inem
-                                        </div>
-                                        <div class="message-text">
-                                            What do you think about my new Dashboard?
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar2.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="messages-date">
-                                    Sunday, Feb 9, 15:28
-                                </li>
-                                <li class="other">
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mba Inem
-                                        </div>
-                                        <div class="message-text">
-                                            Alo...
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar2.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mba Inem
-                                        </div>
-                                        <div class="message-text">
-                                            Are you there?
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar2.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="self">
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mas Bambang
-                                        </div>
-                                        <div class="message-text">
-                                            Hi, i am here
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar1.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mba Inem
-                                        </div>
-                                        <div class="message-text">
-                                            Your Dashboard is great
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar1.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="messages-date">
-                                    Friday, Feb 7, 23:39
-                                </li>
-                                <li class="other">
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mba Inem
-                                        </div>
-                                        <div class="message-text">
-                                            How does the binding and digesting work in ReactJS?, Bang?
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar2.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="self">
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mas Bambang
-                                        </div>
-                                        <div class="message-text">
-                                            oh that's your question?
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar1.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mas Bambang
-                                        </div>
-                                        <div class="message-text">
-                                            little reduntant, no?
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar1.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                    <div class="message">
-                                        <div class="message-name">
-                                            Mas Bambang
-                                        </div>
-                                        <div class="message-text">
-                                            literally we get the question daily
-                                        </div>
-                                        <div class="message-avatar">
-                                            <img src="{{ asset('assets/images/avatar1.png') }}" alt="">
-                                        </div>
-                                    </div>
-                                </li>
-                            </ol>
+                        <div class="card-header bg-danger text-white text-center">
+                            <h4 class="mb-0 text-white text-center">BAD NEWS FIRST</h4>
                         </div>
-                        <div class="message-bar">
-                            <div class="message-inner">
-                                <a class="link icon-only" href="#"><i class="fa fa-camera"></i></a>
-                                <div class="message-area">
-                                    <textarea placeholder="Message"></textarea>
-                                </div>
-                                <a class="link" href="#">
-                                    Send
-                                </a>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr class="bg-danger text-white text-center">
+                                        <th class="text-white">NO</th>
+                                        <th class="text-white">SUPPLIER</th>
+                                        <th class="text-white">PART NAME</th>
+                                        <th class="text-white">PROBLEM</th>
+                                        <th width="400px" class="text-white">DESCRIPTION</th>
+                                        <th class="text-white">QTY</th>
+                                        <th class="text-white">Action</th>
+                                    </tr>
+                                </thead>
+                                @forelse($tableBnf as $dataBnf)
+                                    <tr class="{{ $dataBnf['supplier_name'] == 'NG' ? 'table-danger' : '' }}">
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $dataBnf['supplier_name'] }}</td>
+                                        <td>{{ $dataBnf['part_name'] }}</td>
+                                        <td>{{ $dataBnf['problem'] ?? '-' }}</td>
+                                        <td>{{ $dataBnf['description'] ?? '-' }}</td>
+                                        <td>{{ $dataBnf['qty'] }}</td>
+                                        <td><button type="button" name="close" data-id="{{$dataBnf['id']}}" class="closeBnf btn btn-primary btn-sm">Selesaikan</button></td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="9" class="text-center py-4">No Daily Checksheet Submited</td>
+                                    </tr>
+                                    @endforelse
+                            </table>
+                        </div>
+
+                        <div class="card-header bg-info text-white text-center">
+                            <h4 class="mb-0 text-white text-center">LIST PROBLEM & FOLLOW UP CHECK RECEIVING INSPECTION</h4>
+                        </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead class="thead-dark">
+                                        <tr class="bg-info text-white text-center">
+                                            <th class="text-white">NO</th>
+                                            <th class="text-white">DATE</th>
+                                            <th class="text-white">PART NO</th>
+                                            <th class="text-white">PART NAME</th>
+                                            <th class="text-white">PROBLEM</th>
+                                            <th class="text-white">SUPPLIER</th>
+                                            <th class="text-white">CAR</th>
+                                            <th class="text-white">A3 REPORT</th>
+                                            <th class="text-white">Action</th>
+                                            {{-- <th class="text-white">FINDING LOC</th> --}}
+                                        </tr>
+                                    </thead>
+                                        @forelse($tableProblem as $dataProblem)
+                                        <tr class="">
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ $dataProblem['formated_date'] }}</td>
+                                            <td>{{ $dataProblem['part_number'] }}</td>
+                                            <td>{{ $dataProblem['part_name'] ?? '-' }}</td>
+                                            <td>{{ $dataProblem['problem_description'] ?? '-' }}</td>
+                                            <td>{{ $dataProblem['supplier_name'] ?? '-' }}</td>
+                                            <td>{!! $dataProblem['car'] ?? '-' !!}</td>
+                                            <td>{!! $dataProblem['a3_report'] ?? '-' !!}</td>
+                                            <td>{!! $dataProblem['action'] ?? '-' !!}</td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="9" class="text-center py-4">No Daily Checksheet Submited</td>
+                                        </tr>
+                                        @endforelse
+                                </table>
                             </div>
-                        </div>
+
                     </div>
                 </div>
-            </div>
         </div>
     </div>
 @endsection
 
 @push('js')
-    <script src="{{ asset('vendor/chart.js/Chart.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="{{ asset('assets/js/pages/index.min.js') }}"></script>
+    <script src="{{ asset('vendor/chart-js/chart.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1"></script>
+    <script>
+        // Add this modal handling code
+        $(document).ready(function() {
+            // Show upload CAR modal
+            $('body').on('click', '.upload-car', function() {
+                var problemId = $(this).data('id');
+                $('#uploadCarModal').find('input[name="problem_id"]').val(problemId);
+                $('#uploadCarModal').modal('show');
+            });
+
+            // Handle form submission
+            $('#uploadCarForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: "{{ route('problem-list.upload-car') }}",
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire('Success!', response.message, 'success');
+                            $('#uploadCarModal').modal('hide');
+                            location.reload();
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Error!', xhr.responseJSON.message, 'error');
+                    }
+                });
+            });
+        });
+
+        // Real-time Clock
+        function updateDateTime() {
+            const now = new Date(document.getElementById('filterDate').value);
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+
+            document.getElementById('realtime-date').innerHTML = now.toLocaleDateString('id-ID', dateOptions);
+            // document.getElementById('realtime-clock').innerHTML = now.toLocaleTimeString('id-ID', timeOptions);
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Refresh page every minute
+        setInterval(function() {
+            location.reload();
+        }, 60000); // 60000 milliseconds = 1 minute
+
+
+        // Chart initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Register plugin
+            // Chart.register(ChartAnnotation);
+            // Chart.register(ChartDataLabels);
+
+            // Chart config
+            const tableQuality = @json($tableQuality);
+            const chart = document.getElementById('okRatioChart').getContext('2d');
+            const suppliers = tableQuality.map(item => item.supplier_name);
+            const okRatios = tableQuality.map(item => parseFloat(item.oke_ratio.replace('%', '')));
+
+            new Chart(chart, {
+                type: 'bar', // Gunakan tipe 'bar'
+                data: {
+                    labels: suppliers.map(supplier => supplier.length > 10 ? supplier.substring(0, 10) + '...' : supplier),
+                    datasets: [{
+                        label: 'OK Ratio (%)',
+                        data: okRatios,
+                        backgroundColor: okRatios.map(ratio => ratio >= 95 ? '#4CAF50' : '#F44336'),
+                        borderWidth: 1,
+                    }]
+                },
+                options: {
+                    indexAxis: 'x', // Ini yang membuat grafik horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            beginAtZero: true,
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                stepSize: 10
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Part Name'
+                            }
+                        }
+                    },
+                    plugins: {
+                        datalabels: {
+                            display: true,
+                            color: '#fff',
+                            anchor: 'end',
+                            align: 'start',
+                            formatter: (value) => value + '%'
+                        },
+                        annotation: {
+                            annotations: {
+                                line95: {
+                                    type: 'line',
+                                    yMin: 95,
+                                    yMax: 95,
+                                    borderColor: '#F44336',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    label: {
+                                        content: 'Target 95%',
+                                        display: true,
+                                        position: 'end',
+                                        backgroundColor: '#F44336',
+                                        color: '#333',
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        // selesaikan bnf
+        $('body').on('click', '.closeBnf', function() {
+                var bnfId = $(this).data('id');
+                Swal.fire({
+                    title: 'Apakah anda yakin?',
+                    text: "Status BNF ini akan berubah menjadi selesai",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#82868',
+                    confirmButtonText: 'Ya, selesaikan!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "POST",
+                            url: "{{ url('bad-news-firsts') }}/close/" + bnfId,
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                _method: 'POST'
+                            },
+                            success: function(response) {
+                                location.reload();
+                                showToast('success', response.message);
+                            },
+                            error: function(response) {
+                                var errorMessage = response.responseJSON
+                                    .message;
+                                showToast('error',
+                                    errorMessage);
+                            }
+                        });
+                    }
+                });
+            });
+
+    </script>
 @endpush
+
+{{-- Add this modal HTML before the closing body tag --}}
+<div class="modal fade" id="uploadCarModal" tabindex="-1" role="dialog" aria-labelledby="uploadCarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadCarModalLabel">Upload CAR</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="uploadCarForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" name="problem_id" value="">
+                    <div class="form-group">
+                        <label for="no_car">No. CAR</label>
+                        <input type="text" class="form-control" id="no_car" name="no_car" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="car_file">CAR File</label>
+                        <input type="file" class="form-control" id="car_file" name="car_file" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                        <small class="form-text text-muted">Accepted formats: PDF, DOC, DOCX, XLS, XLSX</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
