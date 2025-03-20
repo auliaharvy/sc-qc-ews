@@ -13,6 +13,12 @@
                     <span>Dashboard</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('home-monitoring') }}" class="link">
+                    <i class="fa-solid fa-dashboard"></i>
+                    <span>Monitoring</span>
+                </a>
+            </li>
             <li class="{{ request()->routeIs('daily-check-sheet') ? 'active' : '' }}">
                 <a href="{{ route('daily-check-sheet') }}" class="link">
                     <i class="fa-solid fa-check"></i>

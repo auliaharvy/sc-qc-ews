@@ -30,16 +30,16 @@
 
 
     <!-- CSS for this page only -->
-    {{-- @stack('css') --}}
+    @stack('css')
     <!-- End CSS  -->
 
     {{-- vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     {{-- toast --}}
-    {{-- @include('components.toast')
+    @include('components.toast')
 
-    <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script> --}}
+    <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
 
 </head>
 

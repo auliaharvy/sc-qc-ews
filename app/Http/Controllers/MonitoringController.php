@@ -14,7 +14,7 @@ use App\Models\DailyChecksheet;
 use Illuminate\Support\Facades\DB;
 
 
-class HomeController extends Controller
+class MonitoringController extends Controller
 {
     protected $dailyChecksheetService;
     /**
@@ -178,7 +178,6 @@ class HomeController extends Controller
             // query list data early warning tabel
             $dataQC = $this->dailyChecksheetService->dataDashboardQuality($selectedDate);
             $tableQuality = $dataQC;
-            // return $tableQuality;
             // query list data BNF tabel
             $tableBnf = Bnf::where('status', 'open')
                 ->with(['part', 'supplier'])
@@ -211,14 +210,14 @@ class HomeController extends Controller
                         '<button type="button" class="btn btn-primary btn-sm upload-car" data-id="' . $problem->id . '">
                             <i class="ti-upload"></i> Upload CAR
                         </button>' :
-                        '<a href="' . url($problem->car_file) . '" download>
+                        '<a href="' . asset('storage/' . $problem->car_file) . '" download>
                           '. $problem->no_car .'
                         </a>';
 
                     $a3Report = empty($problem->a3_report) ?
                         empty($problem->car_file) ? '-' :
                         '-' :
-                        '<a href="' . url($problem->a3_report) . '"download>
+                        '<a href="' . asset('storage/' . $problem->a3_report) . '"download>
                             '. $problem->no_a3_report .'
                         </a>';
 
@@ -368,8 +367,9 @@ class HomeController extends Controller
 
             // query list data early warning tabel
             $dataQC = $this->dailyChecksheetService->dataDashboardQuality($selectedDate);
+            // return $dataQC;
             $tableQuality = $dataQC;
-            return $tableQuality;
+            // return $tableQuality;
             // query list data BNF tabel
             $tableBnf = Bnf::where('status', 'open')
                 ->with(['part', 'supplier'])
@@ -402,14 +402,14 @@ class HomeController extends Controller
                         '<button type="button" class="btn btn-primary btn-sm upload-car" data-id="' . $problem->id . '">
                             <i class="ti-upload"></i> Upload CAR
                         </button>' :
-                        '<a href="' . asset('storage/' . $problem->car_file) . '" download>
+                        '<a href="' . url($problem->car_file) . '" download>
                           '. $problem->no_car .'
                         </a>';
 
                     $a3Report = empty($problem->a3_report) ?
                         empty($problem->car_file) ? '-' :
                         '-' :
-                        '<a href="' . asset('storage/' . $problem->a3_report) . '"download>
+                        '<a href="' . url($problem->a3_report) . '"download>
                             '. $problem->no_a3_report .'
                         </a>';
 
@@ -440,7 +440,7 @@ class HomeController extends Controller
                     ];
                 })->toArray();
 
-            return view('home', [
+            return view('home-monitoring', [
                 'performance' => $data['performance'],
                 'qualityWarnings' => $data['quality_warnings'],
                 'badNews' => $data['bad_news'],

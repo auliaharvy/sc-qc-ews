@@ -109,7 +109,7 @@
                                     <td class="identity-part">{{ $part->part_name }}</td>
                                     <td class="input-cell">
                                         <input type="number" class="form-control form-control-sm total-produced"
-                                            name="total_produced[{{$part->id}}]" value="0"
+                                            name="total_produced[{{$part->id}}]" value="0" min="0"
                                             oninput="updateValues(this)">
                                     </td>
                                     <td class="input-cell">
@@ -130,7 +130,7 @@
                                                 <label>{{ $ngType }}</label>
                                                 <input type="number" class="form-control form-control-sm"
                                                     name="ngtype-{{ $ngType }}[{{$part->id}}]"
-                                                    value="0" oninput="updateNG(this)">
+                                                    value="0" min="0" oninput="updateNG(this)">
                                             </div>
                                             @endforeach
                                         </div>

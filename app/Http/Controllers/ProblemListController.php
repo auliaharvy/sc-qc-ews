@@ -59,4 +59,11 @@ class ProblemListController extends Controller
 
         return response()->json($result);
     }
+
+    public function selesaikan(string $id)
+    {
+        $result = $this->problemListService->selesaikan($id);
+
+        return response()->json($result);
+    }
 }

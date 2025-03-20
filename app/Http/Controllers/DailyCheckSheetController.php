@@ -84,6 +84,16 @@ class DailyCheckSheetController extends Controller
                 // Add the quantity to the total NG count
                 // $totalNg += $quantity;
             }
+
+            $totalNg = $request->input("ng.$partId");
+            $totalOk = $request->input("ok.$partId");
+            $totalProduced = $request->input("total_produced.$partId");
+            if ($totalNg != 0 || $totalOk != 0) {
+                if ($totalProduced == 0 || $totalProduced == null) {
+                    $message = 'Hasil Produksi tidak boleh 0';
+                    return back()->withInput()->with('error', $message);
+                }
+            }
             $data[] = [
                 'supplier_id' => $request->input("supplier_id.$partId"),
                 'part_id' => $partId,
@@ -97,6 +107,7 @@ class DailyCheckSheetController extends Controller
         }
         // return $data;
         $result = $this->dailyChecksheetService->create($data);
+        // return $result;
         if ($result['success']) {
             return redirect()->route('daily-check-sheet')->with('success', $result['message']);
         } else {

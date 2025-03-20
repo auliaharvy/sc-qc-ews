@@ -13,10 +13,6 @@ use App\Models\Supplier;
 use App\Models\DailyChecksheet;
 use App\Models\DailyChecksheetNg;
 use App\Models\NgType;
-use App\Services\BnfService;
-use App\Services\ProblemListService;
-use App\Models\Bnf;
-use App\Models\ProblemList;
 
 class DailyChecksheetService
 {
@@ -149,99 +145,204 @@ class DailyChecksheetService
             ->where('production_date', $production_date)
             ->get();
         } else {
-            $data = [];
-            $suppliers = Supplier::get()->all();
+            // $data = DailyChecksheet::with(['supplier'])
+            // ->select([
+            //     'supplier_id',
+            //     'production_date',
+            //     DB::raw('SUM(total_produced) as total_produced'),
+            //     DB::raw('SUM(total_ng) as total_ng'),
+            //     DB::raw('SUM(total_ok) as total_ok'),
+            //     DB::raw('DATE(production_date) as formatted_date'), // Menambahkan formatted_date
+            //     DB::raw('(SELECT part_id
+            //           FROM daily_checksheet d2
+            //           WHERE d2.supplier_id = daily_checksheet.supplier_id
+            //             AND d2.production_date = daily_checksheet.production_date
+            //           GROUP BY d2.part_id
+            //           ORDER BY SUM(d2.total_ng) DESC
+            //           LIMIT 1) as top_part_id'),
+            //     // DB::raw('(SELECT ng_types.name
+            //     //       FROM daily_check_sheet_ng_types
+            //     //       JOIN ng_types ON daily_check_sheet_ng_types.ng_types_id = ng_types.id
+            //     //       WHERE daily_check_sheet_ng_types.daily_check_sheet_id = daily_checksheet.id
+            //     //       GROUP BY ng_types.name
+            //     //       ORDER BY SUM(daily_check_sheet_ng_types.quantity) DESC
+            //     //       LIMIT 1) as top_ng_type_name')
+            // ])
+            // ->groupBy('supplier_id', 'formatted_date', 'production_date') // Menggunakan formatted_date untuk groupBy
+            // ->where('production_date', $production_date)
+            // ->get();
 
-            foreach ($suppliers as $supplier) {
-                // Get daily checksheet data grouped by part with aggregates
-                $checksheetData = DailyChecksheet::where('supplier_id', $supplier->id)
-                    ->where('production_date', $production_date)
-                    ->select(
-                        'part_id',
-                        DB::raw('SUM(total_produced) as total_produced'),
-                        DB::raw('SUM(total_ng) as total_ng'),
-                        DB::raw('SUM(total_ok) as total_ok')
-                    )
-                    ->groupBy('part_id')
-                    ->orderByDesc('total_ng')
-                    ->first();
-
-                $part = $checksheetData && $checksheetData->part_id ? Part::find($checksheetData->part_id) : null;
-
-                if ($checksheetData) {
-                    $topProblemName = '-';
-                    $topProblemQuantity = 0;
-
-                    // Only check for problems if there's NG
-                    if ($checksheetData->total_ng > 0) {
-                        // Get the checksheet with the highest NG count for this specific supplier
-                        $problemChecksheetData = DailyChecksheet::where('supplier_id', $supplier->id)
-                            ->where('production_date', $production_date)
-                            ->where('total_ng', '>', 0)
-                            ->select('id', 'part_id')
-                            ->orderByDesc('total_ng')
-                            ->first();
-
-                        if ($problemChecksheetData) {
-                            $topProblem = DailyChecksheetNg::where('daily_checksheet_id', $problemChecksheetData->id)
-                                ->where('quantity', '>', 0)
-                                ->orderByDesc('quantity')
-                                ->first();
-
-                            if ($topProblem) {
-                                $topProblemName = NgType::find($topProblem->ng_type_id)->name;
-                                $topProblemQuantity = $topProblem->quantity;
-                            }
-                        }
-                    } // End of total_ng > 0 check
-
-                    // No need to fetch part again as it's already fetched above
-                }
-
-                // Date formatting code remains the same
-                $date = \Carbon\Carbon::parse($production_date);
-                $dayName = $this->days[$date->format('l')];
-                $monthName = $this->months[$date->format('F')];
-                $formattedDate = "$dayName, " . $date->format('d ') . $monthName . $date->format(' Y');
-
-                $data[] = [
-                    'supplier_id' => $supplier->id,
-                    'supplier_name' => $supplier->name,
-                    'total_produced' => $checksheetData->total_produced ?? 0,
-                    'total_ok' => $checksheetData->total_ok ?? 0,
-                    'total_ng' => $checksheetData->total_ng ?? 0,
-                    'part_name' => $part->part_name ?? '-',
-                    'part_number' => $part->part_number ?? '-',
-                    'judgement' => $checksheetData && $checksheetData->total_produced > 0
-                        ? ($checksheetData->total_ng / $checksheetData->total_produced) * 100 >= 5
-                            ? 'NG'
-                            : 'Good'
-                        : '-',
-                    'problem' => $topProblemName ?? '-', // Use this instead of top_problem_name for consistency
-                    'problem_quantity' => $topProblemQuantity ?? 0, // Add the quantity as a separate field
-                    // 'top_problem' => $topProblem ?? '-', // Remove this line to avoid sending the entire object
-                    'ng_ratio' => $checksheetData && $checksheetData->total_produced > 0
-                        ? number_format(($checksheetData->total_ng / $checksheetData->total_produced) * 100, 0) . '%'
-                        : '0%',
-                    'ok_ratio' => $checksheetData && $checksheetData->total_produced > 0
-                        ? number_format(($checksheetData->total_ok / $checksheetData->total_produced) * 100, 0) . '%'
-                        : '0%',
-                    'production_date' => $production_date ?? '-',
-                    'formatted_date' => $formattedDate ?? '-',
-                ];
-
-                $topProblemName = '-';
-                $topProblemQuantity = 0;
-
-            }
-
+            $data = Supplier::select([
+                'suppliers.id as supplier_id',
+                'suppliers.name as supplier_name',
+                DB::raw("COALESCE(SUM(daily_checksheet.total_produced), 0) as total_produced"),
+                DB::raw("COALESCE(SUM(daily_checksheet.total_ng), 0) as total_ng"),
+                DB::raw("COALESCE(SUM(daily_checksheet.total_ok), 0) as total_ok"),
+                DB::raw("DATE('$production_date') as production_date"), // Gunakan parameter tanggal
+                DB::raw('(SELECT part_id
+                      FROM daily_checksheet d2
+                      WHERE d2.supplier_id = suppliers.id
+                        AND d2.production_date = "' . $production_date . '"
+                      GROUP BY d2.part_id
+                      ORDER BY SUM(d2.total_ng) DESC
+                      LIMIT 1) as top_part_id')
+            ])
+            ->leftJoin('daily_checksheet', function($join) use ($production_date) {
+                $join->on('suppliers.id', '=', 'daily_checksheet.supplier_id')
+                    ->whereDate('daily_checksheet.production_date', $production_date);
+            })
+            ->groupBy('suppliers.id', 'suppliers.name')
+            ->get();
         }
 
-        return $data;
         // query top part
-        // $topPartIds = $data->pluck('top_part_id')->filter()->unique();
-        // $parts = Part::whereIn('id', $topPartIds)->get()->keyBy('id');
+        $topPartIds = $data->pluck('top_part_id')->filter()->unique();
+        $parts = Part::whereIn('id', $topPartIds)->get()->keyBy('id');
+
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('part_number', function($row) use ($parts) {
+                return $parts[$row->top_part_id]->part_number?? '-';
+            })
+            ->addColumn('part_name', function($row) use ($parts) {
+                $totalProduced = $row->total_produced;
+                $totalNg = $row->total_ng;
+                if ($totalProduced > 0) {
+                    if (number_format(($totalNg / $totalProduced) * 100, 0) > 5) {
+                        return $parts[$row->top_part_id]->part_name;
+                    } else {
+                        return '-';
+                    }
+                } else {
+                    return '-';
+                }
+            })
+            ->addColumn('supplier_name', function($row) {
+                return $row->supplier_name ?? '-';
+            })
+            ->addColumn('formated_date', function($row) {
+                if (!$row->production_date) {
+                    return '-';
+                }
+
+                $date = \Carbon\Carbon::parse($row->production_date);
+                $dayName = $this->days[$date->format('l')];
+                $monthName = $this->months[$date->format('F')];
+
+                return "$dayName, " . $date->format('d ') . $monthName . $date->format(' Y');
+            })
+            ->addColumn('judgement', function($row) {
+                $totalProduced = $row->total_produced;
+                $totalNg = $row->total_ng;
+                if ($totalProduced > 0) {
+                    if (number_format(($totalNg / $totalProduced) * 100, 0) >= 5) {
+                        return 'NG';
+                    } else {
+                        return 'Good';
+                    }
+                } else {
+                    return '-';
+                }
+            })
+            ->addColumn('ng_ratio', function($row) {
+                $totalProduced = $row->total_produced;
+                $totalNg = $row->total_ng;
+                if ($totalProduced > 0) {
+                    return number_format(($totalNg / $totalProduced) * 100, 0) . '%';
+                } else {
+                    return '0%';
+                }
+            })
+            ->addColumn('oke_ratio', function($row) {
+                $totalProduced = $row->total_produced;
+                $totalOk = $row->total_ok;
+                if ($totalProduced > 0) {
+                    return number_format(($totalOk / $totalProduced) * 100, 0) . '%';
+                } else {
+                    return '0%';
+                }
+            })
+            ->addColumn('action', function ($row) {
+                $actionBtn = '<a href="' . route('daily-check-sheet.detail', ['supplier_id' => $row->supplier_id, 'production_date' => $row->production_date]) . '"
+                            class="edit btn btn-warning btn-sm me-2"><i class="fa fa-eye"></i></a>';
+                return '<div class="d-flex">' . $actionBtn . '</div>';
+            })
+            ->rawColumns(['action', 'ng_ratio', 'oke_ratio', 'part_name', 'part_number'])
+            ->make(true);
     }
+
+    // public function historyBySupplierAndDate($supplier_id, $production_date)
+    // {
+    //     // Mengambil detail dari DailyChecksheet berdasarkan supplier_id dan production_date
+    //     $details = DailyChecksheet::with(['supplier', 'part', 'ngTypes'])
+    //         ->where('supplier_id', $supplier_id)
+    //         ->whereDate('production_date', $production_date)
+    //         ->get();
+
+    //     // Mengambil semua nama NgType
+    //     $ngTypes = NgType::pluck('name')->toArray();
+
+    //     // Inisialisasi DataTables
+    //     $dataTables = DataTables::of($details)
+    //         ->addIndexColumn()
+    //         ->addColumn('supplier_name', function($row) {
+    //             return $row->supplier->name ?? '-';
+    //         })
+    //         ->addColumn('part_number', function($row) {
+    //             return $row->part->part_number ?? '-';
+    //         })
+    //         ->addColumn('part_name', function($row) {
+    //             return $row->part->part_name ?? '-';
+    //         })
+    //         ->addColumn('formated_date', function($row) {
+    //             if (!$row->production_date) {
+    //                 return '-';
+    //             }
+
+    //             $date = \Carbon\Carbon::parse($row->production_date);
+    //             $dayName = $this->days[$date->format('l')];
+    //             $monthName = $this->months[$date->format('F')];
+
+    //             return "$dayName, " . $date->format('d ') . $monthName . $date->format(' Y');
+    //         })
+    //         ->addColumn('jam_buat', function($row) {
+    //             if (!$row->created_at) {
+    //                 return '-';
+    //             }
+    //             return \Carbon\Carbon::parse($row->created_at)->format('H:i'); // Format: Jam:Menit
+    //         })
+    //         ->addColumn('ng_ratio', function($row) {
+    //             $totalProduced = $row->total_produced;
+    //             $totalNg = $row->total_ng;
+    //             if ($totalProduced > 0) {
+    //                 return number_format(($totalNg / $totalProduced) * 100, 2) . '%';
+    //             } else {
+    //                 return '0%';
+    //             }
+    //         })
+    //         ->addColumn('oke_ratio', function($row) {
+    //             $totalProduced = $row->total_produced;
+    //             $totalOk = $row->total_ok;
+    //             if ($totalProduced > 0) {
+    //                 return number_format(($totalOk / $totalProduced) * 100, 2) . '%';
+    //             } else {
+    //                 return '0%';
+    //             }
+    //         });
+
+    //     // Menambahkan kolom untuk setiap NgType
+    //     foreach ($ngTypes as $ngType) {
+    //         $dataTables->addColumn($ngType, function($row) use ($ngType) {
+    //             // Cari ngType yang sesuai dalam relasi ngTypes
+    //             $ngTypeData = $row->ngTypes->firstWhere('name', $ngType);
+    //             return $ngTypeData ? $ngTypeData->pivot->quantity : 0;
+    //         });
+    //     }
+
+    //     // Mengembalikan respons JSON dari DataTables
+    //     return $dataTables->rawColumns(['ng_ratio', 'oke_ratio'])->with('ngTypes', $ngTypes)->make(true);
+    // }
 
     public function getDetailBySupplierAndDate($supplier_id, $production_date)
     {
@@ -355,7 +456,7 @@ class DailyChecksheetService
     {
         // return $data;
         DB::beginTransaction();
-        $supplier_id = $data[0]['supplier_id'];
+
         try {
             foreach ($data as $item) {
                 if($item['total_produced'] != 0) {
@@ -380,99 +481,11 @@ class DailyChecksheetService
                 }
             }
 
-            $checksheetData = DailyChecksheet::where('supplier_id', $supplier_id)
-                    ->where('production_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d'))
-                    ->select(
-                        'part_id',
-                        DB::raw('SUM(total_produced) as total_produced'),
-                        DB::raw('SUM(total_ng) as total_ng'),
-                        DB::raw('SUM(total_ok) as total_ok')
-                    )
-                    ->groupBy('part_id')
-                    ->orderByDesc('total_ng')
-                    ->first();
-
-            if($checksheetData) {
-                $topProblemName = '-';
-                $topProblemQuantity = 0;
-                if ($checksheetData->total_ng > 0) {
-                    // Get the checksheet with the highest NG count for this specific supplier
-                    $problemChecksheetData = DailyChecksheet::where('supplier_id', $supplier_id)
-                        ->where('production_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d'))
-                        ->where('total_ng', '>', 0)
-                        ->select('id', 'part_id')
-                        ->orderByDesc('total_ng')
-                        ->first();
-
-                    if ($problemChecksheetData) {
-                        $topProblem = DailyChecksheetNg::where('daily_checksheet_id', $problemChecksheetData->id)
-                            ->where('quantity', '>', 0)
-                            ->orderByDesc('quantity')
-                            ->first();
-
-                        if ($topProblem) {
-                            $topProblemName = NgType::find($topProblem->ng_type_id)->name;
-                            $topProblemQuantity = $topProblem->quantity;
-                        }
-                    }
-                }
-                $part = $checksheetData && $checksheetData->part_id? Part::find($checksheetData->part_id) : null;
-                $bnf = ($checksheetData->total_ng / $checksheetData->total_produced) * 100 >= 10
-                    ? true
-                    :false;
-
-                if($bnf) {
-                    $latestBnf = Bnf::where('part_id', $checksheetData->part_id)
-                        ->where('supplier_id', $supplier_id)
-                        ->whereDate('issuance_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d'))
-                        ->where('completion_date', null)
-                        ->first();
-                    if (!$latestBnf) {
-                        $bnfData = [
-                            'part_id' => $checksheetData->part_id,
-                            'supplier_id' => $supplier_id,
-                            'problem' => $topProblemName,
-                            'qty' => $checksheetData->total_ng,
-                            'issuance_date' => now()->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
-                            'created_by' => auth()->user()->id,
-                            // 'description' => $part->part_number . '-' . $part->part_name . ' terdapat NG ' . ($topProblemName ?? 'Unknown Problem') . ' sebanyak ' . $checksheetData->total_ng
-                            'description' => 'Generate otomatis dari input daily checksheet'
-                        ];
-
-                        // Use BnfService to create the BNF record
-                        $bnfService = app(BnfService::class);
-                        $bnfResult = $bnfService->create($bnfData);
-                    }
-
-                    $latestProblem = ProblemList::where('part_id', $checksheetData->part_id)
-                        ->where('supplier_id', $supplier_id)
-                        ->whereDate('production_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d'))
-                        ->where('status', 'open')
-                        ->first();
-                    if (!$latestProblem) {
-                        $problemData = [
-                            'part_id' => $checksheetData->part_id,
-                            'supplier_id' => $supplier_id,
-                            'problem_description' => $topProblemName . ' (Generate otomatis dari input dailychecksheet)',
-                            'quantity_affected' => $checksheetData->total_ng,
-                            'production_date' => now()->setTimezone('Asia/Jakarta')->format('Y-m-d'),
-                            'finding_location' => 'Production Line', // Default value
-                            'status' => 'open',
-                            'created_by' => auth()->user()->id,
-                        ];
-
-                        $problemService = app(ProblemListService::class);
-                        $bnfResult = $problemService->create($problemData);
-                    }
-                }
-            }
-
             DB::commit();
 
             return [
                 'success' => true,
-                'message' => 'Daily Checksheet berhasil ditambahkan',
-                'checksheet' => $checksheetData,
+                'message' => 'Daily Checksheet berhasil ditambahkan'
             ];
 
         } catch (\Exception $e) {

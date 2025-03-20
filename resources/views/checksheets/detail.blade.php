@@ -11,7 +11,7 @@
 
     <div class="row">
         <div class="col-md-12">
-            <div class="chart-container" style="position: relative; height: 100%; width: 100%">
+            <div class="chart-container" style="position: relative; height: 80vh; width: 100%">
                 <canvas id="okRatioChart"></canvas>
             </div>
         </div>

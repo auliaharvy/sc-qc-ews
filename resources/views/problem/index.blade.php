@@ -40,10 +40,78 @@
             </div>
         </div>
     </div>
+
+    {{-- Add this modal HTML before the closing body tag --}}
+{{-- Update modal ID to match JavaScript --}}
+<div class="modal fade" id="uploadA3ReportModal" tabindex="-1" role="dialog" aria-labelledby="uploadA3ReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadA3ReportModalLabel">Upload A3 Report</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="uploadA3ReportForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" name="problem_id" value="">
+                    <div class="form-group">
+                        <label for="no_a3_report">No. A3 Report</label>
+                        <input type="text" class="form-control" id="no_a3_report" name="no_a3_report" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="a3_report">A3 Report File</label>
+                        <input type="file" class="form-control" id="a3_report" name="a3_report" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                        <small class="form-text text-muted">Accepted formats: PDF, DOC, DOCX, XLS, XLSX</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('js')
     <script type="text/javascript">
+        $(document).ready(function() {
+            // Show upload A3 modal
+            $('body').on('click', '.upload-a3-report', function() {
+                var problemId = $(this).data('id');
+                $('#uploadA3ReportModal').find('input[name="problem_id"]').val(problemId);
+                $('#uploadA3ReportModal').modal('show');
+            });
+
+            // Handle form submission
+            $('#uploadA3ReportForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: "{{ route('problem-list.upload-a3') }}",
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire('Success!', response.message, 'success');
+                            $('#uploadA3ReportModal').modal('hide'); // Fixed modal ID here
+                            location.reload();
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Error!', xhr.responseJSON.message, 'error');
+                    }
+                });
+            });
+        });
         $(function() {
             // ajax table
             var table = $('.dataTable').DataTable({

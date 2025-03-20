@@ -102,17 +102,32 @@ class BnfService
                 'description' => $data['description']
             ];
 
-            if ($supplier) {
-                // Notification::send($supplier, new BnfNotification($notificationData));
-                Notification::route('mail', $supplier->email)->notify(new BnfNotification($notificationData));
+            try {
+                if ($supplier) {
+                    // Notification::send($supplier, new BnfNotification($notificationData));
+                    Notification::route('mail', $supplier->email)->notify(new BnfNotification($notificationData));
+                }
+            } catch (\Exception $e) {
+                // Continue even if supplier notification fails
+                \Log::error('Failed to send supplier notification: ' . $e->getMessage());
             }
 
-            foreach ($adminUsers as $adminUser) {
-                Notification::send($adminUser, new BnfNotification($notificationData));
+            try {
+                foreach ($adminUsers as $adminUser) {
+                    Notification::send($adminUser, new BnfNotification($notificationData));
+                }
+            } catch (\Exception $e) {
+                // Continue even if admin notifications fail
+                \Log::error('Failed to send admin notifications: ' . $e->getMessage());
             }
 
-            if ($loggedInUser) {
-                Notification::send($loggedInUser, new BnfNotification($notificationData));
+            try {
+                if ($loggedInUser) {
+                    Notification::send($loggedInUser, new BnfNotification($notificationData));
+                }
+            } catch (\Exception $e) {
+                // Continue even if user notification fails
+                \Log::error('Failed to send user notification: ' . $e->getMessage());
             }
 
             DB::commit();

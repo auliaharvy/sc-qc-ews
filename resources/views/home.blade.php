@@ -35,7 +35,7 @@
         <div class="row same-height">
                 <div class="card">
                     <div class="card-header bg-primary text-white text-center">
-                        <h5 class="text-white">VISUALISASI SUPPLIER </h5>
+                        <h5 class="text-white">Quality EWS </h5>
                         <div id="realtime-date" class="h6 text-white"></div>
                     </div>
                     <div class="card-body">
@@ -44,11 +44,11 @@
                                 <div class="row text-center ">
                                     @foreach($tableQuality as $data)
                                     <div class="col-3 mt-3">
-                                        <a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data->supplier_id, 'production_date' => $data->production_date]) }}" style="text-decoration: none; color: inherit;">
-                                        <div id="card-statistik-hari-ini" class="card {{ $data->judgement == 'NG' ? 'bg-danger' : ($data->judgement == 'Good' ? 'bg-success' : 'bg-warning') }}">
+                                        <a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data['supplier_id'], 'production_date' => $data['supplier_id']]) }}" style="text-decoration: none; color: inherit;">
+                                        <div id="card-statistik-hari-ini" class="card {{ $data['judgement'] == 'NG' ? 'bg-danger' : ($data['judgement'] == 'Good' ? 'bg-success' : 'bg-warning') }}">
                                             <div id="card-statistik-hari-ini-body" class="card-body p-2">
                                                 {{-- <div class="text-muted small">Total</div> --}}
-                                                <div class="h6 text-white">{{ $data->supplier_name }}</div>
+                                                <div class="h6 text-white">{{ $data['supplier_name'] }}</div>
                                             </div>
                                         </div>
                                         </a>
@@ -75,11 +75,11 @@
                 </div>
 
                 <div class="card">
-                    < class="card-body">
+                    <div class="card-body">
                         <div class="card-header bg-warning text-white text-center">
                             <form method="GET" action="{{ request()->url() }}" id="dateFilterForm">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h4 class="mb-0 text-white text-center">Quality Early Warning System</h4>
+                                    <h4 class="mb-0 text-white text-center">(% / Pcs)</h4>
                                     <input type="date"
                                         name="filter_date"
                                         id="filterDate"
@@ -106,19 +106,19 @@
                                 </thead>
                                 <tbody>
                                     @forelse($tableQuality as $data)
-                                    <tr class="{{ $data->judgement == 'NG' ? 'table-danger' : '' }}">
+                                    <tr class="{{ $data['judgement'] == 'NG' ? 'table-danger' : '' }}">
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $data->supplier_name }}</td> <!-- Assuming supplier name is stored in supplier_name -->
-                                        <td>{{ $data->oke_ratio }}</td> <!-- Assuming the correct property name is oke_ratio -->
-                                        <td>{{ $data->ng_ratio }}</td>
-                                        <td>{{ $data->judgement }}</td>
-                                        <td>{{ $data->part_name }}</td>
-                                        <td>{{ $data->problem ?? '-' }}</td>
-                                        <td><a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data->supplier_id, 'production_date' => $data->production_date]) }}" class="edit btn btn-warning btn-sm me-2"><i class="fa fa-eye"></i></a></td>
+                                        <td>{{ $data['supplier_name'] }}</td>
+                                        <td>{{ $data['ok_ratio'] }}</td>
+                                        <td>{{ $data['ng_ratio'] }}</td>
+                                        <td>{{ $data['judgement'] }}</td>
+                                        <td>{{ $data['part_name'] }}</td>
+                                        <td>{{ $data['problem']}}</td>
+                                        <td><a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data['supplier_id'], 'production_date' => $data['production_date']]) }}" class="edit btn btn-warning btn-sm me-2"><i class="fa fa-eye"></i></a></td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="9" class="text-center py-4">No Daily Checksheet Submited</td>
+                                        <td colspan="9" class="text-center py-4">No Daily Checksheet Submitted</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -126,7 +126,7 @@
                         </div>
 
                         <div class="card-header bg-danger text-white text-center">
-                            <h4 class="mb-0 text-white text-center">BAD NEWS FIRST</h4>
+                            <h4 class="mb-0 text-white text-center">BNF</h4>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered">
@@ -160,7 +160,7 @@
                         </div>
 
                         <div class="card-header bg-info text-white text-center">
-                            <h4 class="mb-0 text-white text-center">LIST PROBLEM & FOLLOW UP CHECK RECEIVING INSPECTION</h4>
+                            <h4 class="mb-0 text-white text-center">Problem Follow Up</h4>
                         </div>
                             <div class="table-responsive">
                                 <table class="table table-bordered table-striped">
@@ -358,6 +358,43 @@
                         $.ajax({
                             type: "POST",
                             url: "{{ url('bad-news-firsts') }}/close/" + bnfId,
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                _method: 'POST'
+                            },
+                            success: function(response) {
+                                location.reload();
+                                showToast('success', response.message);
+                            },
+                            error: function(response) {
+                                var errorMessage = response.responseJSON
+                                    .message;
+                                showToast('error',
+                                    errorMessage);
+                            }
+                        });
+                    }
+                });
+            });
+
+            $('body').on('click', '.closeA3Report', function() {
+                var a3ReportId = $(this).data('id');
+                Swal.fire({
+                    title: 'Apakah anda yakin?',
+                    text: "Status Problem List ini akan berubah menjadi selesai",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#82868',
+                    confirmButtonText: 'Ya, selesaikan!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "POST",
+                            url: "{{ url('problem-list') }}/close/" + a3ReportId,
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },

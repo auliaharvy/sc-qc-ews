@@ -10,6 +10,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PartController;
 use App\Http\Controllers\BnfController;
 use App\Http\Controllers\ProblemListController;
+use App\Http\Controllers\MonitoringController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -18,14 +19,26 @@ Route::middleware('guest')->group(function () {
     Route::get('/', function () {
         return view('auth.login');
     });
+    // Route::get('/home-monitoring', [HomeController::class, 'indexMonitoring'])->name('home-monitoring');
 });
+
+Route::get('/home-monitoring', [MonitoringController::class, 'indexMonitoring'])->name('home-monitoring');
+Route::get('/link-storage', function () {
+    Artisan::call('storage:link');
+});
+
+Route::get('/generate-storage', function(){
+    \Illuminate\Support\Facades\Artisan::call('storage:link');
+    echo 'ok';
+ });
+
 
 Auth::routes();
 
 
 Route::middleware('auth')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
-    Route::get('/home-monitoring', [HomeController::class, 'indexMonitoring'])->name('home-monitoring');
+    // Route::get('/home-monitoring', [HomeController::class, 'indexMonitoring'])->name('home-monitoring');
 
     // Daily checksheet : start
     Route::get('/daily-check-sheet', [DailyCheckSheetController::class, 'index'])->name('daily-check-sheet');
@@ -47,4 +60,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('problems', ProblemListController::class);
     // Route::post('/bad-news-firsts/close/{id}', [BnfController::class, 'selesaikan'])->name('bad-news-firsts.selesaikan');
     Route::post('/problem-list/upload-car', [ProblemListController::class, 'uploadCar'])->name('problem-list.upload-car');
+    Route::post('/problem-list/upload-a3', [ProblemListController::class, 'uploadA3Report'])->name('problem-list.upload-a3');
+    Route::post('/problem-list/close/{id}', [ProblemListController::class, 'selesaikan'])->name('problem-list.selesaikan');
 });

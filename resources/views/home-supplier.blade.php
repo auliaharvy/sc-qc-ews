@@ -264,7 +264,7 @@
         </div>
 
         <x-form-section title="{{ $title }}">
-            <form method="POST" action="{{ route('daily-check-sheet.store') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('daily-check-sheet.store') }}" enctype="multipart/form-data" id="checksheet-form">
                 @csrf
                 <div class="mb-3">
                     <div class="form-group">
@@ -288,7 +288,7 @@
                                         <td class="identity-part">{{ $part->part_name }}</td>
                                         <td class="input-cell">
                                             <input type="number" class="form-control form-control-sm total-produced"
-                                                name="total_produced[{{$part->id}}]" value="0"
+                                                name="total_produced[{{$part->id}}]" value="0" min="0"
                                                 oninput="updateValues(this)">
                                         </td>
                                         <td class="input-cell">
@@ -309,7 +309,7 @@
                                                     <label>{{ $ngType }}</label>
                                                     <input type="number" class="form-control form-control-sm"
                                                         name="ngtype-{{ $ngType }}[{{$part->id}}]"
-                                                        value="0" oninput="updateNG(this)">
+                                                        value="0" min="0" oninput="updateNG(this)">
                                                 </div>
                                                 @endforeach
                                             </div>
@@ -325,9 +325,8 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Simpan Data</button>
+                <button type="submit" class="btn btn-primary" id="submit-button">Simpan Data</button>
             </form>
-
 
             <script>
                 function updateValues(input) {
@@ -352,6 +351,22 @@
                     row.querySelector('.ng').value = totalNG; // Update total NG
                     updateValues(row.querySelector('.total-produced')); // Update OK value
                 }
+
+                $('#checksheet-form').on('submit', function(e) {
+                    const button = $('#submit-button');
+                    button.html(`
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Menyimpan Data...
+                    `).prop('disabled', true);
+                });
+
+                // $('form').on('submit', function (e) {
+                //     $('button[type=submit], input[type=submit]', $(this)).blur().addClass('disabled is-submited');
+                // });
+
+                // $(document).on('click', 'button[type=submit].is-submited, input[type=submit].is-submited', function(e) {
+                //     e.preventDefault();
+                // });
             </script>
         </x-form-section>
     </div>

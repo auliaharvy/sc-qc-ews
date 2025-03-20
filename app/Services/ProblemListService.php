@@ -80,11 +80,11 @@ class ProblemListService
                 return "$dayName, " . $date->format('d ') . $monthName . $date->format(' Y');
             })
             ->addColumn('car', function($row) {
-                if (auth()->user()->roles()->first()->name) {
+                if (auth()->user()->roles()->first()->name == 'Admin Supplier') {
                     if (empty($row->car_file)) {
                         return '-';
                     } else {
-                        return '<a href="' . asset('storage/' . $row->car_file) . '" class="btn btn-success btn-sm" download>
+                        return '<a href="' . url($row->car_file) . '" class="btn btn-success btn-sm" download>
                                     <i class="ti-download"></i> Download CAR
                                 </a>';
                     }
@@ -94,7 +94,7 @@ class ProblemListService
                                     <i class="ti-upload"></i> Upload CAR
                                 </button>';
                     } else {
-                        return '<a href="' . asset('storage/' . $row->car_file) . '" class="btn btn-success btn-sm" download>
+                        return '<a href="' . url($row->car_file) . '" class="btn btn-success btn-sm" download>
                                     <i class="ti-download"></i> Download CAR
                                 </a>';
                     }
@@ -103,7 +103,7 @@ class ProblemListService
             })
 
             ->addColumn('a3_report', function($row) {
-                if (auth()->user()->roles()->first()->name) {
+                if (auth()->user()->roles()->first()->name == 'Admin Supplier') {
                     if (empty($row->car_file)) {
                         return '-';
                     } else {
@@ -112,7 +112,7 @@ class ProblemListService
                                     <i class="ti-upload"></i> Upload A3 Report
                                 </button>';
                         } else {
-                            return '<a href="'. asset('storage/'. $row->a3_report). '" class="btn btn-success btn-sm" download>
+                            return '<a href="'. url($row->a3_report) . '" class="btn btn-success btn-sm" download>
                                         <i class="ti-download"></i> Download A3 Report
                                     </a>';
                         }
@@ -121,7 +121,7 @@ class ProblemListService
                     if (empty($row->a3_report)) {
                         return '-';
                     } else {
-                        return '<a href="'. asset('storage/'. $row->a3_report). '" class="btn btn-success btn-sm" download>
+                        return '<a href="'. url($row->a3_report) . '" class="btn btn-success btn-sm" download>
                                         <i class="ti-download"></i> Download A3 Report
                                     </a>';
                     }
@@ -202,17 +202,32 @@ class ProblemListService
                 // 'description' => $data['description']
             ];
 
-            if ($supplier) {
-                // Notification::send($supplier, new BnfNotification($notificationData));
-                Notification::route('mail', $supplier->email)->notify(new ProblemListNotification($notificationData));
+            try {
+                if ($supplier) {
+                    // Notification::send($supplier, new BnfNotification($notificationData));
+                    Notification::route('mail', $supplier->email)->notify(new ProblemListNotification($notificationData));
+                }
+            } catch (\Exception $e) {
+                // Continue even if supplier notification fails
+                \Log::error('Failed to send supplier notification: ' . $e->getMessage());
             }
 
-            foreach ($adminUsers as $adminUser) {
-                Notification::send($adminUser, new ProblemListNotification($notificationData));
+            try {
+                foreach ($adminUsers as $adminUser) {
+                    Notification::send($adminUser, new ProblemListNotification($notificationData));
+                }
+            } catch (\Exception $e) {
+                // Continue even if admin notifications fail
+                \Log::error('Failed to send admin notifications: ' . $e->getMessage());
             }
 
-            if ($loggedInUser) {
-                Notification::send($loggedInUser, new ProblemListNotification($notificationData));
+            try {
+                if ($loggedInUser) {
+                    Notification::send($loggedInUser, new ProblemListNotification($notificationData));
+                }
+            } catch (\Exception $e) {
+                // Continue even if user notification fails
+                \Log::error('Failed to send user notification: ' . $e->getMessage());
             }
 
             DB::commit();
@@ -306,14 +321,25 @@ class ProblemListService
             $problemList = ProblemList::findOrFail($data->problem_id);
 
             // Store the file in storage/app/public/car_files directory
-            if (!file_exists(storage_path('app/public/car_files'))) {
-                mkdir(storage_path('app/public/car_files'), 0777, true);
+            // Create directory if it doesn't exist
+            $uploadPath = public_path('upload/img/car_files');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
             }
-            $path = $data['car_file']->store('car_files', 'public');
+
+            // Get the original file name and create unique name
+            $file = $data['car_file'];
+            $fileName = 'CAR' . '-' . $data['no_car'] . '-' .time() . '_' . $file->getClientOriginalName();
+
+            // Move the uploaded file to the created directory
+            $file->move($uploadPath, $fileName);
+
+            $path = 'upload/img/car_files/' . $fileName;
 
             // Only save the relative path without full URL
             $problemList->update([
                 'no_car' => $data['no_car'],
+                'car_upload_at' =>now()->setTimezone('Asia/Jakarta'),
                 'car_file' => $path, // Stores path like 'car_files/filename.pdf'
             ]);
 
@@ -342,14 +368,29 @@ class ProblemListService
             $problemList = ProblemList::findOrFail($data->problem_id);
 
             // Store the file in storage/app/public/car_files directory
-            if (!file_exists(storage_path('app/public/a3_report'))) {
-                mkdir(storage_path('app/public/a3_report'), 0777, true);
+            // if (!file_exists(storage_path('app/public/a3_report'))) {
+            //     mkdir(storage_path('app/public/a3_report'), 0777, true);
+            // }
+            // $path = $data['a3_report']->store('a3_report', 'public');
+
+            $uploadPath = public_path('upload/img/a3_report');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
             }
-            $path = $data['a3_report']->store('a3_report', 'public');
+
+            // Get the original file name and create unique name
+            $file = $data['a3_report'];
+            $fileName = 'A3Report' . '-' . $data['no_a3_report'] . '-' .time() . '_' . $file->getClientOriginalName();
+
+            // Move the uploaded file to the created directory
+            $file->move($uploadPath, $fileName);
+
+            $path = 'upload/img/a3_report/' . $fileName;
 
             // Only save the relative path without full URL
             $problemList->update([
                 'no_a3_report' => $data['no_a3_report'],
+                'report_upload_at' => now()->setTimezone('Asia/Jakarta'),
                 'a3_report' => $path, // Stores path like 'car_files/filename.pdf'
             ]);
 
@@ -366,6 +407,36 @@ class ProblemListService
             return [
                 'success' => false,
                 'message' => 'Gagal Upload File A3 Report: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    public function selesaikan($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $problemList = ProblemList::findOrFail($id);
+
+            $problemList->update([
+                'status' => 'resolved',
+                'updated_at' => now()->setTimezone('Asia/Jakarta'),
+                'updated_by' => auth()->user()->id,
+            ]);
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Problem List berhasil diselesaikan',
+                'data' => $problemList
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'success' => false,
+                'message' => 'Gagal Menyelesaikan Problem List: ' . $e->getMessage()
             ];
         }
     }
