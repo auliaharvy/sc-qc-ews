@@ -85,7 +85,7 @@
 @section('content')
     <x-form-section title="{{ $title }}">
 
-        <form method="POST" action="{{ route('daily-check-sheet.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('daily-check-sheet.store') }}" enctype="multipart/form-data" id="checksheet-form">
             @csrf
             <div class="mb-3">
                 <div class="form-group">
@@ -146,7 +146,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Simpan Data</button>
+            <button type="submit" class="btn btn-primary" id="submit-button">Simpan Data</button>
         </form>
 
         {{-- <form method="POST" action="{{ route('daily-check-sheet.store') }}" enctype="multipart/form-data">
@@ -199,6 +199,7 @@
         </form> --}}
 
         <script>
+
             function updateValues(input) {
                 const row = input.closest('tr');
                 const totalProduced = parseInt(row.querySelector('.total-produced').value) || 0;
@@ -221,6 +222,14 @@
                 row.querySelector('.ng').value = totalNG; // Update total NG
                 updateValues(row.querySelector('.total-produced')); // Update OK value
             }
+
+            $('#checksheet-form').on('submit', function(e) {
+                    const button = $('#submit-button');
+                    button.html(`
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Menyimpan Data...
+                    `).prop('disabled', true);
+                });
         </script>
     </x-form-section>
 @endsection

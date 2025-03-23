@@ -28,36 +28,38 @@ class SupplierController extends Controller
 
     public function create()
     {
-        return view('suppliers.create');
+        $title = 'Tambah Supplier';
+        return view('suppliers.create', compact('title'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nama' => 'required|max:255',
-            'alamat' => 'required',
-            'telepon' => 'required|numeric'
-        ]);
+        $result = $this->supplierService->create($request->all());
 
-        Supplier::create($validated);
-        return redirect()->route('suppliers.index')->with('success', 'Supplier berhasil ditambahkan');
+        if ($result['success']) {
+            return redirect()->route('suppliers.index')->with('success', $result['message']);
+        } else {
+            return back()->withInput()->with('error', $result['message']);
+        }
     }
 
-    public function edit(Supplier $supplier)
+    public function edit(string $id)
     {
-        return view('suppliers.edit', compact('supplier'));
+        $title = 'Edit Supplier';
+        $supplier = $this->supplierService->getById($id);
+
+        return view('suppliers.edit', compact('title', 'supplier'));
     }
 
-    public function update(Request $request, Supplier $supplier)
+    public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
-            'nama' => 'required|max:255',
-            'alamat' => 'required',
-            'telepon' => 'required|numeric'
-        ]);
+        $result = $this->supplierService->update($request->all(), $id);
 
-        $supplier->update($validated);
-        return redirect()->route('suppliers.index')->with('success', 'Supplier berhasil diperbarui');
+        if ($result['success']) {
+            return redirect()->route('suppliers.index')->with('success', $result['message']);
+        } else {
+            return back()->withInput()->with('error', $result['message']);
+        }
     }
 
     public function destroy(Supplier $supplier)

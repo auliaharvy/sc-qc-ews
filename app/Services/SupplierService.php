@@ -36,7 +36,7 @@ class SupplierService
 
     public function getById($id)
     {
-        return User::findOrFail($id);
+        return Supplier::findOrFail($id);
     }
 
     public function create($data)
@@ -45,14 +45,10 @@ class SupplierService
 
         try {
             $supplier = Supplier::create([
-                'code' => $this->generateSupplierCode(),
+                'code' => $data['code'],
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'phone' => $data['phone'],
-                'address' => $data['address'],
-                'contact_person' => $data['contact_person'],
-                'website' => $data['website'] ?? null,
-                'status' => $data['status'] ?? 'active'
+                'pic' => $data['pic'],
             ]);
 
             DB::commit();
@@ -87,13 +83,10 @@ class SupplierService
             $supplier = Supplier::findOrFail($id);
 
             $supplier->update([
+                'code' => $data['code'],
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'phone' => $data['phone'],
-                'address' => $data['address'],
-                'contact_person' => $data['contact_person'],
-                'website' => $data['website'] ?? null,
-                'status' => $data['status'] ?? 'active'
+                'pic' => $data['pic'],
             ]);
 
             DB::commit();

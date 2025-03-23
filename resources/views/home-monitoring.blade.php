@@ -108,8 +108,8 @@
                                     <td>{{ $data['ok_ratio'] }}</td>
                                     <td>{{ $data['ng_ratio'] }}</td>
                                     <td>{{ $data['judgement'] }}</td>
-                                    <td>{{ $data['part_name'] }}</td>
-                                    <td>{{ $data['problem']}}</td>
+                                    <td>{{ $data['judgement'] == 'NG' ? $data['part_name'] : ($data['judgement'] == 'Good' ? '-' : '-')  }}</td>
+                                    <td>{{ $data['judgement'] == 'NG' ? $data['problem'] : ($data['judgement'] == 'Good' ? '-' : '-')}}</td>
                                     <td><a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data['supplier_id'], 'production_date' => $data['production_date']]) }}" class="edit btn btn-warning btn-sm me-2"><i class="fa fa-eye"></i></a></td>
                                 </tr>
                                 @empty
