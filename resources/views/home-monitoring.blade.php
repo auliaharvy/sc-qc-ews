@@ -2,6 +2,16 @@
 
 @section('content')
 <div class="content-wrapper" style="height: calc(100vh - 60px);"> <!-- Adjust height sesuai kebutuhan -->
+    <div class="row">
+        <div class="col-12 mb-3">
+            <a href="{{ route('home') }}" class="link">
+                <div class="d-flex align-items-center justify-content-center">
+                    <img src="{{ asset('assets/images/sc-logo.png') }}" alt="Logo" height="50" class="me-3">
+                    <h1 class="mb-0">Early Warning System</h1>
+                </div>
+            </a>
+        </div>
+    </div>
     <div class="row h-100 g-3"> <!-- Gunakan h-100 dan tambahkan gutter -->
         <!-- Kiri Atas - Visualisasi Supplier -->
         <div class="col-md-6 h-50 d-flex flex-column"> <!-- 50% height -->
@@ -14,9 +24,17 @@
                         @foreach($tableQuality as $data)
                         <div class="col-3 mt-3">
                             <a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data['supplier_id'], 'production_date' => $data['production_date']]) }}" style="text-decoration: none; color: inherit;">
-                            <div id="card-statistik-hari-ini" class="card {{ $data['judgement'] == 'NG' ? 'bg-danger' : ($data['judgement'] == 'Good' ? 'bg-success' : 'bg-warning') }}">
-                                <div id="card-statistik-hari-ini-body" class="card-body p-1">
-                                    <div class="h6 text-white">{{ $data['supplier_name'] }}</div>
+                            <div id="card-statistik-hari-ini" class="card {{
+                                $data['production_status'] === 'not-submitted' ? 'bg-not-submitted' :
+                                ($data['production_status'] === 'no_production' ? 'bg-not-production' :
+                                ($data['production_status'] === 'production' ?
+                                    ($data['judgement'] === 'NG' ? 'bg-not-good' :
+                                    ($data['judgement'] === 'Good' ? 'bg-good' : 'bg-not-submitted'))
+                                : 'bg-not-submitted'))
+                            }}">
+                                <div id="card-statistik-hari-ini-body" class="card-body p-2">
+                                    {{-- <div class="text-muted small">Total</div> --}}
+                                    <div class="h6 {{ $data['production_status'] === 'not-submitted' ? 'text-black' : 'text-white' }}">{{ $data['supplier_name'] }}</div>
                                 </div>
                             </div>
                             </a>
@@ -25,9 +43,18 @@
                     </div>
                     <div class="mt-auto pt-2">
                         <div class="d-flex justify-content-center gap-3">
-                            <span class="badge bg-warning">Belum Submit</span>
-                            <span class="badge bg-success">OK</span>
-                            <span class="badge bg-danger">NG</span>
+                            <div class="me-3">
+                                <span class="badge bg-not-submitted text-not-submitted">|</span> Belum Submit
+                            </div>
+                            <div class="me-3">
+                                <span class="badge bg-not-production text-not-production">|</span> Tidak ada produksi
+                            </div>
+                            <div class="me-3">
+                                <span class="badge bg-good text-good">-</span> Ok
+                            </div>
+                            <div>
+                                <span class="badge bg-not-good text-not-good">-</span> NG
+                            </div>
                         </div>
                     </div>
                 </div>

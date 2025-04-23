@@ -37,6 +37,12 @@
                     <div class="card-header bg-primary text-white text-center">
                         <h5 class="text-white">Quality EWS </h5>
                         <div id="realtime-date" class="h6 text-white"></div>
+                        <input type="date"
+                        name="filter_date"
+                        id="filterDate"
+                        class="form-control w-25"
+                        value="{{ request('filter_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d')) }}"
+                        onchange="document.getElementById('dateFilterForm').submit()">
                     </div>
                     <div class="card-body">
                         <div class="card-body">
@@ -45,10 +51,17 @@
                                     @foreach($tableQuality as $data)
                                     <div class="col-3 mt-3">
                                         <a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data['supplier_id'], 'production_date' => $data['supplier_id']]) }}" style="text-decoration: none; color: inherit;">
-                                        <div id="card-statistik-hari-ini" class="card {{ $data['judgement'] == 'NG' ? 'bg-danger' : ($data['judgement'] == 'Good' ? 'bg-success' : 'bg-warning') }}">
+                                        <div id="card-statistik-hari-ini" class="card {{
+                                            $data['production_status'] === 'not-submitted' ? 'bg-not-submitted' :
+                                            ($data['production_status'] === 'no_production' ? 'bg-not-production' :
+                                            ($data['production_status'] === 'production' ?
+                                                ($data['judgement'] === 'NG' ? 'bg-not-good' :
+                                                ($data['judgement'] === 'Good' ? 'bg-good' : 'bg-not-submitted'))
+                                            : 'bg-not-submitted'))
+                                        }}">
                                             <div id="card-statistik-hari-ini-body" class="card-body p-2">
                                                 {{-- <div class="text-muted small">Total</div> --}}
-                                                <div class="h6 text-white">{{ $data['supplier_name'] }}</div>
+                                                <div class="h6 {{ $data['production_status'] === 'not-submitted' ? 'text-black' : 'text-white' }}">{{ $data['supplier_name'] }}</div>
                                             </div>
                                         </div>
                                         </a>
@@ -60,13 +73,16 @@
                                 {{-- <h6 class="text-center">Legend</h6> --}}
                                 <div class="d-flex justify-content-center">
                                     <div class="me-3">
-                                        <span class="badge bg-warning text-warning">-</span> Belum Submit
+                                        <span class="badge bg-not-submitted text-not-submitted">|</span> Belum Submit
                                     </div>
                                     <div class="me-3">
-                                        <span class="badge bg-success text-success">-</span> Ok
+                                        <span class="badge bg-not-production text-not-production">|</span> Tidak ada produksi
+                                    </div>
+                                    <div class="me-3">
+                                        <span class="badge bg-good text-good">-</span> Ok
                                     </div>
                                     <div>
-                                        <span class="badge bg-danger text-danger">-</span> NG
+                                        <span class="badge bg-not-good text-not-good">-</span> NG
                                     </div>
                                 </div>
                             </div>
@@ -80,13 +96,7 @@
                             <form method="GET" action="{{ request()->url() }}" id="dateFilterForm">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h4 class="mb-0 text-white text-center">(% / Pcs)</h4>
-                                    <input type="date"
-                                        name="filter_date"
-                                        id="filterDate"
-                                        class="form-control w-25"
-                                        value="{{ request('filter_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d')) }}"
 
-                                        onchange="document.getElementById('dateFilterForm').submit()">
                                 </div>
                             </form>
                         </div>

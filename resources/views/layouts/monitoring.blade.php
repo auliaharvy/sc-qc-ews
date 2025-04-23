@@ -52,7 +52,7 @@
 
         @include('layouts.administrator.navigation') --}}
 
-        @include('layouts.administrator.content')
+        @include('layouts.administrator.content-monitoring')
 
         {{-- @include('layouts.administrator.setting') --}}
 

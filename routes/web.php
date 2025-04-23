@@ -11,6 +11,7 @@ use App\Http\Controllers\PartController;
 use App\Http\Controllers\BnfController;
 use App\Http\Controllers\ProblemListController;
 use App\Http\Controllers\MonitoringController;
+use App\Http\Controllers\ProductionStatementController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -62,4 +63,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/problem-list/upload-car', [ProblemListController::class, 'uploadCar'])->name('problem-list.upload-car');
     Route::post('/problem-list/upload-a3', [ProblemListController::class, 'uploadA3Report'])->name('problem-list.upload-a3');
     Route::post('/problem-list/close/{id}', [ProblemListController::class, 'selesaikan'])->name('problem-list.selesaikan');
+    // Add this with your other routes
+    Route::post('/production-statements', [ProductionStatementController::class, 'store'])->name('production-statements.store');
 });

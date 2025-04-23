@@ -11,6 +11,7 @@ use App\Models\Supplier;
 use App\Models\Bnf;
 use App\Models\ProblemList;
 use App\Models\DailyChecksheet;
+use App\Models\ProductionStatement;
 use Illuminate\Support\Facades\DB;
 
 
@@ -91,6 +92,11 @@ class HomeController extends Controller
         ]);
 
         if ($userRole == 'Admin Supplier') {
+            // Check today's production statement
+            $productionStatement = ProductionStatement::where('supplier_id', $supplierId)
+                ->where('date', $today)
+                ->first();
+
             // Get production data for current month
             $startOfMonth = now()->setTimezone('Asia/Jakarta')->startOfMonth();
             $endOfMonth = now()->setTimezone('Asia/Jakarta')->endOfMonth();
@@ -134,7 +140,7 @@ class HomeController extends Controller
             // return $data;
             $ngTypes = NgType::pluck('name')->toArray();
             $title = 'Tambah Daily Checksheet';
-            return view('home-supplier', compact('title', 'parts', 'ngTypes', 'data', 'dates', 'okData', 'ngData', 'supplier', 'todayStats'));
+            return view('home-supplier', compact('title', 'parts', 'ngTypes', 'data', 'dates', 'okData', 'ngData', 'supplier', 'todayStats', 'productionStatement'));
         } else {
             $jsonData = Storage::get('data/dummy-data.json');
             $data = json_decode($jsonData, true);
@@ -175,9 +181,22 @@ class HomeController extends Controller
             ->where('production_date', $today)
             ->first();
 
+            // Get production statements for all suppliers
+            $productionStatements = ProductionStatement::whereDate('date', $selectedDate)
+                ->pluck('status', 'supplier_id')
+                ->toArray();
+
             // query list data early warning tabel
             $dataQC = $this->dailyChecksheetService->dataDashboardQuality($selectedDate);
             $tableQuality = $dataQC;
+
+            // Add production statement status to each supplier's data
+            $tableQuality = collect($dataQC)->map(function ($item) use ($productionStatements) {
+                $supplierId = $item['supplier_id'] ?? null;
+                $item['production_status'] = $productionStatements[$supplierId] ?? 'not-submitted';
+                return $item;
+            })->toArray();
+
             // return $tableQuality;
             // query list data BNF tabel
             $tableBnf = Bnf::where('status', 'open')
@@ -366,10 +385,21 @@ class HomeController extends Controller
             ->where('production_date', $today)
             ->first();
 
+            // Get production statements for all suppliers
+            $productionStatements = ProductionStatement::whereDate('date', $selectedDate)
+                ->pluck('status', 'supplier_id')
+                ->toArray();
+
             // query list data early warning tabel
             $dataQC = $this->dailyChecksheetService->dataDashboardQuality($selectedDate);
             $tableQuality = $dataQC;
-            return $tableQuality;
+
+            $tableQuality = collect($dataQC)->map(function ($item) use ($productionStatements) {
+                $supplierId = $item['supplier_id'] ?? null;
+                $item['production_status'] = $productionStatements[$supplierId] ?? 'not-submitted';
+                return $item;
+            })->toArray();
+            // return $tableQuality;
             // query list data BNF tabel
             $tableBnf = Bnf::where('status', 'open')
                 ->with(['part', 'supplier'])

@@ -214,12 +214,12 @@
             <!-- Monthly Chart -->
             <div class="col-md-6">
                 <div class="card shadow">
-                    <div class="card-header">
-                        <h6 class="card-title">Grafik Produksi Hari Ini <div id="realtime-date" class="h6 text-muted"></div></h6>
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Grafik Produksi Hari Ini</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive m">
-                            <table class="table table-bordered">
+                    <div class="card-body mt-10">
+                        <div class="table-responsive mt-10">
+                            <table class="table table-bordered mt-10">
                                 <thead class="thead-dark">
                                     <tr class="bg-warning text-white text-center">
                                         <th class="text-white">NO</th>
@@ -263,112 +263,139 @@
             </div>
         </div>
 
-        <x-form-section title="{{ $title }}">
-            <form method="POST" action="{{ route('daily-check-sheet.store') }}" enctype="multipart/form-data" id="checksheet-form">
-                @csrf
-                <div class="mb-3">
-                    <div class="form-group">
-                        <div class="table-responsive compact-table">
-                            <table class="table table-bordered table-striped">
-                                <thead class="sticky-header">
-                                    <tr>
-                                        <th>Part Number</th>
-                                        <th>Part</th>
-                                        <th>Total</th>
-                                        <th>OK</th>
-                                        <th>NG</th>
-                                        <th class="ng-types-header">Jenis NG <span class="scroll-hint">← Scroll →</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($parts as $part)
-                                    <tr>
-                                        <!-- Fixed Columns -->
-                                        <td class="identity-part"> {{ $part->part_number }}</td>
-                                        <td class="identity-part">{{ $part->part_name }}</td>
-                                        <td class="input-cell">
-                                            <input type="number" class="form-control form-control-sm total-produced"
-                                                name="total_produced[{{$part->id}}]" value="0" min="0"
-                                                oninput="updateValues(this)">
-                                        </td>
-                                        <td class="input-cell">
-                                            <input type="number" class="form-control form-control-sm ok"
-                                                name="ok[{{$part->id}}]" value="0" readonly>
-                                        </td>
-                                        <td class="input-cell">
-                                            <input type="number" class="form-control form-control-sm ng"
-                                                name="ng[{{$part->id}}]" value="0"
-                                                oninput="updateValues(this)" readonly>
-                                        </td>
+        @if(!$productionStatement)
+            <!-- Show Production Statement Form -->
+            <x-form-section title="Pernyataan Produksi">
+                <form method="POST" action="{{ route('production-statements.store') }}">
+                    @csrf
+                    <input type="hidden" name="supplier_id" value="{{ auth()->user()->supplier_id }}">
+                    <input type="hidden" name="date" value="{{ date('Y-m-d') }}">
 
-                                        <!-- Scrollable NG Types -->
-                                        <td class="ng-types-container">
-                                            <div class="ng-types-wrapper">
-                                                @foreach($ngTypes as $ngType)
-                                                <div class="ng-type-item">
-                                                    <label>{{ $ngType }}</label>
-                                                    <input type="number" class="form-control form-control-sm"
-                                                        name="ngtype-{{ $ngType }}[{{$part->id}}]"
-                                                        value="0" min="0" oninput="updateNG(this)">
+                    <div class="form-group mb-3">
+                        <label>Status Produksi untuk {{ date('d F Y') }}</label>
+                        <select name="status" class="form-control" required>
+                            <option value="production">Ya, Kami Ada Produksi Hari Ini</option>
+                            <option value="no_production">Tidak Ada Produksi Hari Ini</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>Alasan (jika tidak ada produksi)</label>
+                        <textarea name="reason" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Kirim Pernyataan</button>
+                </form>
+            </x-form-section>
+        @elseif($productionStatement->status === 'production')
+            <!-- Show Daily Check Sheet Form if production is happening -->
+            <x-form-section title="{{ $title }}">
+                <form method="POST" action="{{ route('daily-check-sheet.store') }}" enctype="multipart/form-data" id="checksheet-form">
+                    @csrf
+                    <div class="mb-3">
+                        <div class="form-group">
+                            <div class="table-responsive compact-table">
+                                <table class="table table-bordered table-striped">
+                                    <thead class="sticky-header">
+                                        <tr>
+                                            <th>Part Number</th>
+                                            <th>Part</th>
+                                            <th>Total</th>
+                                            <th>OK</th>
+                                            <th>NG</th>
+                                            <th class="ng-types-header">Jenis NG <span class="scroll-hint">← Scroll →</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($parts as $part)
+                                        <tr>
+                                            <!-- Fixed Columns -->
+                                            <td class="identity-part"> {{ $part->part_number }}</td>
+                                            <td class="identity-part">{{ $part->part_name }}</td>
+                                            <td class="input-cell">
+                                                <input type="number" class="form-control form-control-sm total-produced"
+                                                    name="total_produced[{{$part->id}}]" value="0" min="0"
+                                                    oninput="updateValues(this)">
+                                            </td>
+                                            <td class="input-cell">
+                                                <input type="number" class="form-control form-control-sm ok"
+                                                    name="ok[{{$part->id}}]" value="0" readonly>
+                                            </td>
+                                            <td class="input-cell">
+                                                <input type="number" class="form-control form-control-sm ng"
+                                                    name="ng[{{$part->id}}]" value="0"
+                                                    oninput="updateValues(this)" readonly>
+                                            </td>
+
+                                            <!-- Scrollable NG Types -->
+                                            <td class="ng-types-container">
+                                                <div class="ng-types-wrapper">
+                                                    @foreach($ngTypes as $ngType)
+                                                    <div class="ng-type-item">
+                                                        <label>{{ $ngType }}</label>
+                                                        <input type="number" class="form-control form-control-sm"
+                                                            name="ngtype-{{ $ngType }}[{{$part->id}}]"
+                                                            value="0" min="0" oninput="updateNG(this)">
+                                                    </div>
+                                                    @endforeach
                                                 </div>
-                                                @endforeach
-                                            </div>
-                                        </td>
+                                            </td>
 
-                                        <input type="hidden" name="part_id[{{$part->id}}]" value="{{ $part->id }}">
-                                        <input type="hidden" name="supplier_id[{{$part->id}}]" value="{{ auth()->user()->supplier_id }}">
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                            <input type="hidden" name="part_id[{{$part->id}}]" value="{{ $part->id }}">
+                                            <input type="hidden" name="supplier_id[{{$part->id}}]" value="{{ auth()->user()->supplier_id }}">
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <button type="submit" class="btn btn-primary" id="submit-button">Simpan Data</button>
-            </form>
+                    <button type="submit" class="btn btn-primary" id="submit-button">Simpan Data</button>
+                </form>
 
-            <script>
-                function updateValues(input) {
-                    const row = input.closest('tr');
-                    const totalProduced = parseInt(row.querySelector('.total-produced').value) || 0;
-                    const ng = parseInt(row.querySelector('.ng').value) || 0;
-                    const ok = totalProduced - ng;
+                <script>
+                    function updateValues(input) {
+                        const row = input.closest('tr');
+                        const totalProduced = parseInt(row.querySelector('.total-produced').value) || 0;
+                        const ng = parseInt(row.querySelector('.ng').value) || 0;
+                        const ok = totalProduced - ng;
 
-                    row.querySelector('.ng').value = ng; // Update NG value
-                    row.querySelector('.ok').value = ok; // Update OK value
-                }
+                        row.querySelector('.ng').value = ng; // Update NG value
+                        row.querySelector('.ok').value = ok; // Update OK value
+                    }
 
-                function updateNG(input) {
-                    const row = input.closest('tr');
-                    const ngInputs = row.querySelectorAll('input[name^="ngtype-"]');
-                    let totalNG = 0;
+                    function updateNG(input) {
+                        const row = input.closest('tr');
+                        const ngInputs = row.querySelectorAll('input[name^="ngtype-"]');
+                        let totalNG = 0;
 
-                    ngInputs.forEach(ngInput => {
-                        totalNG += parseInt(ngInput.value) || 0;
+                        ngInputs.forEach(ngInput => {
+                            totalNG += parseInt(ngInput.value) || 0;
+                        });
+
+                        row.querySelector('.ng').value = totalNG; // Update total NG
+                        updateValues(row.querySelector('.total-produced')); // Update OK value
+                    }
+
+                    $('#checksheet-form').on('submit', function(e) {
+                        const button = $('#submit-button');
+                        button.html(`
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Menyimpan Data...
+                        `).prop('disabled', true);
                     });
+                </script>
+            </x-form-section>
+        @else
+            <!-- Show message if no production today -->
+            <div class="alert alert-info">
+                <h5><i class="icon fas fa-info"></i> Tidak ada produksi hari ini</h5>
+                <p>Produksi telah ditandai tidak aktif untuk hari ini.
+                <br> Alasan: {{ $productionStatement->reason }}</p>
+            </div>
+        @endif
 
-                    row.querySelector('.ng').value = totalNG; // Update total NG
-                    updateValues(row.querySelector('.total-produced')); // Update OK value
-                }
-
-                $('#checksheet-form').on('submit', function(e) {
-                    const button = $('#submit-button');
-                    button.html(`
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Menyimpan Data...
-                    `).prop('disabled', true);
-                });
-
-                // $('form').on('submit', function (e) {
-                //     $('button[type=submit], input[type=submit]', $(this)).blur().addClass('disabled is-submited');
-                // });
-
-                // $(document).on('click', 'button[type=submit].is-submited, input[type=submit].is-submited', function(e) {
-                //     e.preventDefault();
-                // });
-            </script>
-        </x-form-section>
     </div>
 @endsection
 

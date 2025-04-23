@@ -11,6 +11,7 @@ use App\Models\Supplier;
 use App\Models\Bnf;
 use App\Models\ProblemList;
 use App\Models\DailyChecksheet;
+use App\Models\ProductionStatement;
 use Illuminate\Support\Facades\DB;
 
 
@@ -365,10 +366,21 @@ class MonitoringController extends Controller
             ->where('production_date', $today)
             ->first();
 
+            // Get production statements for all suppliers
+            $productionStatements = ProductionStatement::whereDate('date', $selectedDate)
+                ->pluck('status', 'supplier_id')
+                ->toArray();
+
             // query list data early warning tabel
             $dataQC = $this->dailyChecksheetService->dataDashboardQuality($selectedDate);
             // return $dataQC;
             $tableQuality = $dataQC;
+
+            $tableQuality = collect($dataQC)->map(function ($item) use ($productionStatements) {
+                $supplierId = $item['supplier_id'] ?? null;
+                $item['production_status'] = $productionStatements[$supplierId] ?? 'not-submitted';
+                return $item;
+            })->toArray();
             // return $tableQuality;
             // query list data BNF tabel
             $tableBnf = Bnf::where('status', 'open')
