@@ -25,7 +25,7 @@ input[readonly]:focus {
 }
 
 .bg-not-good {
-    background-color: #7f0c0c;
+    background-color: #ac1717;
 }
 
 .bg-good {
@@ -41,7 +41,7 @@ input[readonly]:focus {
 }
 
 .text-not-good {
-    color: #7f0c0c;
+    color: #ac1717;
 }
 
 .text-good {

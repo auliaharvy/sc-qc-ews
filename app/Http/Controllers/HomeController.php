@@ -261,7 +261,9 @@ class HomeController extends Controller
                         'qty' => $problem->quantity_affected,
                         'status' => $statusBadge,
                         'car' => $carButton,
+                        'car_upload_at' => $problem->car_upload_at,
                         'a3_report' => $a3Report,
+                        'report_upload_at' => $problem->report_upload_at,
                         'action' => '<div class="d-flex">' . $actionButtons . '</div>',
                         'formated_date' => $this->formatDate($problem->production_date),
                         'created_at' => $this->formatDateTime($problem->created_at)

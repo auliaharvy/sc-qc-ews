@@ -37,12 +37,7 @@
                     <div class="card-header bg-primary text-white text-center">
                         <h5 class="text-white">Quality EWS </h5>
                         <div id="realtime-date" class="h6 text-white"></div>
-                        <input type="date"
-                        name="filter_date"
-                        id="filterDate"
-                        class="form-control w-25"
-                        value="{{ request('filter_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d')) }}"
-                        onchange="document.getElementById('dateFilterForm').submit()">
+
                     </div>
                     <div class="card-body">
                         <div class="card-body">
@@ -50,7 +45,7 @@
                                 <div class="row text-center ">
                                     @foreach($tableQuality as $data)
                                     <div class="col-3 mt-3">
-                                        <a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data['supplier_id'], 'production_date' => $data['supplier_id']]) }}" style="text-decoration: none; color: inherit;">
+                                        <a href="{{ route('daily-check-sheet.detail', ['supplier_id' => $data['supplier_id'], 'production_date' => $data['production_date']]) }}" style="text-decoration: none; color: inherit;">
                                         <div id="card-statistik-hari-ini" class="card {{
                                             $data['production_status'] === 'not-submitted' ? 'bg-not-submitted' :
                                             ($data['production_status'] === 'no_production' ? 'bg-not-production' :
@@ -96,7 +91,12 @@
                             <form method="GET" action="{{ request()->url() }}" id="dateFilterForm">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h4 class="mb-0 text-white text-center">(% / Pcs)</h4>
-
+                                    <input type="date"
+                                    name="filter_date"
+                                    id="filterDate"
+                                    class="form-control w-25"
+                                    value="{{ request('filter_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d')) }}"
+                                    onchange="document.getElementById('dateFilterForm').submit()">
                                 </div>
                             </form>
                         </div>
@@ -189,7 +189,12 @@
                                         </tr>
                                     </thead>
                                         @forelse($tableProblem as $dataProblem)
-                                        <tr class="">
+                                        <tr class="{{
+                                            (!empty($dataProblem['car_upload_at']) &&
+                                            empty($dataProblem['report_upload_at']) &&
+                                            \Carbon\Carbon::parse($dataProblem['car_upload_at'])->diffInDays(now()) > 3)
+                                            ? 'table-danger' : ''
+                                        }}">
                                             <td>{{ $loop->iteration }}</td>
                                             <td>{{ $dataProblem['formated_date'] }}</td>
                                             <td>{{ $dataProblem['part_number'] }}</td>

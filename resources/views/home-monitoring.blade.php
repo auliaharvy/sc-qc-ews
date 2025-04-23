@@ -12,7 +12,7 @@
             </a>
         </div>
     </div>
-    <div class="row h-100 g-3"> <!-- Gunakan h-100 dan tambahkan gutter -->
+    <div class="row h-100 g-1"> <!-- Gunakan h-100 dan tambahkan gutter -->
         <!-- Kiri Atas - Visualisasi Supplier -->
         <div class="col-md-6 h-50 d-flex flex-column"> <!-- 50% height -->
             <div class="card h-100">
@@ -107,10 +107,18 @@
         <!-- Kiri Bawah - Quality Early Warning -->
         <div class="col-md-6 h-50 d-flex flex-column"> <!-- 50% height -->
             <div class="card h-100">
-                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">(% / Pcs)</h5>
-                    <input type="date" id="filterDate" class="form-control w-auto"
-                           value="{{ now()->format('Y-m-d') }}">
+                <div class="card-header bg-warning text-white text-center">
+                    <form method="GET" action="{{ request()->url() }}" id="dateFilterForm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0 text-white text-center">(% / Pcs)</h4>
+                            <input type="date"
+                            name="filter_date"
+                            id="filterDate"
+                            class="form-control w-25"
+                            value="{{ request('filter_date', now()->setTimezone('Asia/Jakarta')->format('Y-m-d')) }}"
+                            onchange="document.getElementById('dateFilterForm').submit()">
+                        </div>
+                    </form>
                 </div>
                 <div class="overflow-auto position-relative" style="max-height: 100%;">
                     <div class="table-responsive">
@@ -146,10 +154,6 @@
                                 @endforelse
                             </tbody>
                         </table>
-                            <div class="table-footer">
-                                <button class="btn btn-sm btn-link show-more">Show More</button>
-                            </div>
-                        </table>
                     </div>
                 </div>
             </div>
@@ -161,7 +165,7 @@
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0">Problem Follow Up</h5>
                 </div>
-                <div class="overflow-auto" style="max-height:  100%;">
+                <div class="overflow-auto" style="max-height: 100%;">
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead class="thead-dark">
@@ -179,9 +183,14 @@
                             </thead>
                             <tbody>
                                 @forelse($tableProblem as $dataProblem)
-                                <tr>
+                                <tr class="{{
+                                    (!empty($dataProblem['car_upload_at']) &&
+                                    empty($dataProblem['report_upload_at']) &&
+                                    \Carbon\Carbon::parse($dataProblem['car_upload_at'])->diffInDays(now()) > 3)
+                                    ? 'table-danger' : ''
+                                }}">
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $dataProblem['formated_date'] }}</td>
+                                    <td>{{ $dataProblem['car_upload_at'] }}</td>
                                     <td>{{ $dataProblem['part_number'] }}</td>
                                     <td>{{ $dataProblem['part_name'] ?? '-' }}</td>
                                     <td>{{ $dataProblem['problem_description'] ?? '-' }}</td>
@@ -203,6 +212,7 @@
         </div>
     </div>
 </div>
+@endsection
 
 <style>
     #card-statistik-hari-ini {
@@ -251,25 +261,156 @@
     }
 </style>
 
+@push('js')
 <script>
-// Script untuk show more button
-document.querySelectorAll('.show-more').forEach(button => {
-    button.addEventListener('click', function() {
-        const tableBody = this.closest('.card-body');
-        tableBody.style.maxHeight = 'none';
-        this.style.display = 'none';
-    });
-});
+    // Add this modal handling code
+    $(document).ready(function() {
+            // Show upload CAR modal
+            $('body').on('click', '.upload-car', function() {
+                var problemId = $(this).data('id');
+                $('#uploadCarModal').find('input[name="problem_id"]').val(problemId);
+                $('#uploadCarModal').modal('show');
+            });
 
-// Script untuk fixed header
-window.addEventListener('DOMContentLoaded', () => {
-    const tables = document.querySelectorAll('.table-sticky');
-    tables.forEach(table => {
-        const header = table.querySelector('thead');
-        if(header) {
-            header.style.top = '-' + table.offsetTop + 'px';
-        }
-    });
-});
+            // Handle form submission
+            $('#uploadCarForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: "{{ route('problem-list.upload-car') }}",
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire('Success!', response.message, 'success');
+                            $('#uploadCarModal').modal('hide');
+                            location.reload();
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Error!', xhr.responseJSON.message, 'error');
+                    }
+                });
+            });
+        });
+
+    // Refresh page every minute
+    setInterval(function() {
+        location.reload();
+    }, 60000); // 60000 milliseconds = 1 minute
+
+     // selesaikan bnf
+     $('body').on('click', '.closeBnf', function() {
+                var bnfId = $(this).data('id');
+                Swal.fire({
+                    title: 'Apakah anda yakin?',
+                    text: "Status BNF ini akan berubah menjadi selesai",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#82868',
+                    confirmButtonText: 'Ya, selesaikan!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "POST",
+                            url: "{{ url('bad-news-firsts') }}/close/" + bnfId,
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                _method: 'POST'
+                            },
+                            success: function(response) {
+                                location.reload();
+                                showToast('success', response.message);
+                            },
+                            error: function(response) {
+                                var errorMessage = response.responseJSON
+                                    .message;
+                                showToast('error',
+                                    errorMessage);
+                            }
+                        });
+                    }
+                });
+            });
+
+            $('body').on('click', '.closeA3Report', function() {
+                var a3ReportId = $(this).data('id');
+                Swal.fire({
+                    title: 'Apakah anda yakin?',
+                    text: "Status Problem List ini akan berubah menjadi selesai",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#82868',
+                    confirmButtonText: 'Ya, selesaikan!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "POST",
+                            url: "{{ url('problem-list') }}/close/" + a3ReportId,
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                _method: 'POST'
+                            },
+                            success: function(response) {
+                                location.reload();
+                                showToast('success', response.message);
+                            },
+                            error: function(response) {
+                                var errorMessage = response.responseJSON
+                                    .message;
+                                showToast('error',
+                                    errorMessage);
+                            }
+                        });
+                    }
+                });
+            });
 </script>
-@endsection
+@endpush
+
+{{-- Add this modal HTML before the closing body tag --}}
+<div class="modal fade" id="uploadCarModal" tabindex="-1" role="dialog" aria-labelledby="uploadCarModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadCarModalLabel">Upload CAR</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="uploadCarForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" name="problem_id" value="">
+                    <div class="form-group">
+                        <label for="no_car">No. CAR</label>
+                        <input type="text" class="form-control" id="no_car" name="no_car" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="car_file">CAR File</label>
+                        <input type="file" class="form-control" id="car_file" name="car_file" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                        <small class="form-text text-muted">Accepted formats: PDF, DOC, DOCX, XLS, XLSX</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
