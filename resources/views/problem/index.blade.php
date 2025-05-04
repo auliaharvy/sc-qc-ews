@@ -12,8 +12,27 @@
                         Tambah Data
                     </a>
                 @endcan
+                
             </div>
         </div>
+    </div>
+    <div class="row justify-content-end ">
+    <form class="col-md-6 d-flex gap-2 mt-2" style="min-width:220px;" id="filterSupplierForm">
+    <p class="fw-bold text-xs align-self-center mb-0">Filter:</p>
+        <select class="form-select form-select-sm" id="filterSupplier" name="supplier_id">
+          <option value="">-- Semua Supplier --</option>
+            @foreach(getSupplier() as $supplier)
+                            <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                        @endforeach
+                    </select>
+
+                    <select class="form-select form-select-sm" id="filterStatus" name="status">
+                      <option value="">-- Semua Status --</option>
+                      <option value="open">Belum Selesai</option>
+                      <option value="resolved">Selesai</option>
+                    </select>
+                    <button type="button" class="btn btn-sm ms-2 d-flex align-items-center justify-content-center" id="resetFilterBtn" style="width:32px;height:32px;padding:0;">reset</button>
+                </form>
     </div>
 
     <div class="row">
@@ -117,7 +136,13 @@
             var table = $('.dataTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('problems.index') }}",
+                ajax: {
+                    url: "{{ route('problems.index') }}",
+                    data: function(d) {
+                        d.supplier_id = $('#filterSupplier').val();
+                        d.status = $('#filterStatus').val();
+                    }
+                },
                 columnDefs: [{
                     "targets": "_all",
                     "className": "text-start"
@@ -196,6 +221,14 @@
                         searchable: false
                     }
                 ]
+            });
+            $('#filterSupplier, #filterStatus').on('change', function() {
+                table.ajax.reload();
+            });
+            $('#resetFilterBtn').on('click', function() {
+                $('#filterSupplier').val('');
+                $('#filterStatus').val('');
+                table.ajax.reload();
             });
 
 

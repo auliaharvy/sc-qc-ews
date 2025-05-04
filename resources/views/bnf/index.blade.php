@@ -16,6 +16,36 @@
         </div>
     </div>
 
+    <div class="row justify-content-end">
+    <form class="col-md-8 d-flex gap-2 mt-3" style="min-width:220px;" id="filterSupplierForm">
+        <p class="fw-bold text-xs align-self-center mb-0">Filter:</p>
+        <select class="form-select form-select-sm" id="filterSupplier" name="supplier_id">
+          <option value="">-- Semua Supplier --</option>
+            @foreach(getSupplier() as $supplier)
+                <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+            @endforeach
+        </select>
+        <select class="form-select form-select-sm" id="filterPart" name="part_id">
+          <option value="">-- Semua Part --</option>
+            @foreach(getPart() as $part)
+                <option value="{{ $part->id }}">{{ $part->part_number }} - {{ $part->part_name }}</option>
+            @endforeach
+        </select>
+        <select class="form-select form-select-sm" id="filterProblem" name="problem">
+          <option value="">-- Semua Problem --</option>
+            @foreach(getNgTypes() as $ngType)
+                <option value="{{ $ngType->name }}"> {{ $ngType->name }}</option>
+            @endforeach
+        </select>
+        <select class="form-select form-select-sm" id="filterStatus" name="status">
+          <option value="">-- Semua Status --</option>
+          <option value="open">Belum Selesai</option>
+          <option value="resolved">Selesai</option>
+        </select>
+        <button type="button" class="btn btn-sm ms-2 d-flex align-items-center justify-content-center" id="resetFilterBtn" style="width:32px;height:32px;padding:0;">reset</button>
+    </form>
+    </div>
+    
     <div class="row">
         <div class="col-md-12">
             <div class="table-responsive text-left">
@@ -46,7 +76,15 @@
             var table = $('.dataTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('bad-news-firsts.index') }}",
+                ajax: {
+                    url: "{{ route('bad-news-firsts.index') }}",
+                    data: function(d) {
+                        d.supplier_id = $('#filterSupplier').val();
+                        d.part_id = $('#filterPart').val();
+                        d.status = $('#filterStatus').val();
+                        d.problem = $('#filterProblem').val();
+                    }
+                },
                 columnDefs: [{
                     "targets": "_all",
                     "className": "text-start"
@@ -106,6 +144,20 @@
                 ]
             });
 
+            // Filter event handlers
+            $('#filterSupplier, #filterPart, #filterStatus').on('change', function() {
+                table.draw();
+            });
+            $('#filterProblem').on('change', function() {
+                table.draw();
+            });
+            $('#resetFilterBtn').on('click', function() {
+                $('#filterSupplier').val('');
+                $('#filterPart').val('');
+                $('#filterStatus').val('');
+                $('#filterProblem').val('');
+                table.draw();
+            });
 
             // selesaikan bnf
             $('body').on('click', '.closeBnf', function() {
