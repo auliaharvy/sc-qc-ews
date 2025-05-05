@@ -269,10 +269,10 @@
                 <form method="POST" action="{{ route('production-statements.store') }}">
                     @csrf
                     <input type="hidden" name="supplier_id" value="{{ auth()->user()->supplier_id }}">
-                    <input type="hidden" name="date" value="{{ date('Y-m-d') }}">
+                    <input type="hidden" name="date" value="{{ now()->setTimezone('Asia/Jakarta')->format('Y-m-d') }}">
 
                     <div class="form-group mb-3">
-                        <label>Status Produksi untuk {{ date('d F Y') }}</label>
+                        <label>Status Produksi untuk {{ \Carbon\Carbon::now()->setTimezone('Asia/Jakarta')->isoFormat('DD MMMM Y') }}</label>
                         <select name="status" class="form-control" required>
                             <option value="production">Ya, Kami Ada Produksi Hari Ini</option>
                             <option value="no_production">Tidak Ada Produksi Hari Ini</option>

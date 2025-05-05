@@ -16,6 +16,7 @@ class DailyChecksheet extends Model
         'supplier_id',
         'production_date',
         'total_produced',
+        'shift',
         'total_ok',
         'total_ng',
         'created_at',

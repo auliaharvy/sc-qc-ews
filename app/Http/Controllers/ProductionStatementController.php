@@ -16,6 +16,18 @@ class ProductionStatementController extends Controller
             'date' => 'required',
         ]);
 
+        // Determine if it's day or night shift based on current time
+        $currentTime = now()->setTimezone('Asia/Jakarta')->format('H:i');
+        $shift = '';
+
+        if ($currentTime >= '09:00' && $currentTime < '21:00') {
+            $shift = 'day';
+        } else {
+            $shift = 'night';
+        }
+        // Add shift to validated data
+        $validated['shift'] = $shift;
+
         ProductionStatement::create($validated);
 
         return redirect()->route('home')

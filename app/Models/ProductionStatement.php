@@ -10,6 +10,7 @@ class ProductionStatement extends Model
         'supplier_id',
         'date',
         'status',
+        'shift',
         'reason',
         'notification_sent'
     ];

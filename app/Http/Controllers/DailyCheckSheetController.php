@@ -64,6 +64,16 @@ class DailyCheckSheetController extends Controller
         $data = [];
         $totalNg = 0;
 
+        // mendapatkan data shift
+        $currentTime = now()->setTimezone('Asia/Jakarta')->format('H:i');
+        $shift = '';
+
+        if ($currentTime >= '09:00' && $currentTime < '21:00') {
+            $shift = 'day';
+        } else {
+            $shift = 'night';
+        }
+
         // Mengambil semua part_id dari request
         $partIds = $request->input('part_id');
         $ngTypes = NgType::get();
@@ -101,6 +111,7 @@ class DailyCheckSheetController extends Controller
                 'ng' => $request->input("ng.$partId"),
                 'good' => $request->input("ok.$partId"),
                 'ng_types' => $ngData,
+                'shift' => $shift,
             ];
 
             // $bnf = $this->bnfService->create($request->all());
