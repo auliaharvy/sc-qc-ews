@@ -143,7 +143,7 @@ class HomeController extends Controller
             return view('home-supplier', compact('title', 'parts', 'ngTypes', 'data', 'dates', 'okData', 'ngData', 'supplier', 'todayStats', 'productionStatement'));
         } else {
             $jsonData = Storage::get('data/dummy-data.json');
-            $data = json_decode($jsonData, true) ?? [];
+            $data = json_decode($jsonData, true);
 
             // query data chart
             $startOfMonth = now()->setTimezone('Asia/Jakarta')->startOfMonth();
@@ -473,10 +473,10 @@ class HomeController extends Controller
                 })->toArray();
 
             return view('home', [
-                'performance' => $data['performance'] ?? [],
-                'qualityWarnings' => $data['quality_warnings'] ?? [],
-                'badNews' => $data['bad_news'] ?? [],
-                'problems' => $data['problems'] ?? [],
+                'performance' => $data['performance'],
+                'qualityWarnings' => $data['quality_warnings'],
+                'badNews' => $data['bad_news'],
+                'problems' => $data['problems'],
                 'tableQuality' => $tableQuality,
                 'tableBnf' => $tableBnf,
                 'tableProblem' => $tableProblem,
