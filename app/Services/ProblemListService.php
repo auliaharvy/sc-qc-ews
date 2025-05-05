@@ -47,12 +47,24 @@ class ProblemListService
     {
         $userRole = auth()->user()->roles()->first()->name;
         $supplierId = auth()->user()->supplier_id;
+        $request = request();
 
         if ($userRole == 'Admin Supplier') {
-            $data = ProblemList::with(['supplier', 'part'])->select('problem_lists.*')->where('supplier_id', $supplierId)->orderBy('created_at', 'desc')->orderBy('status', 'asc');
+            $data = ProblemList::with(['supplier', 'part'])->select('problem_lists.*')->where('supplier_id', $supplierId);
         } else {
-            $data = ProblemList::with(['supplier', 'part'])->select('problem_lists.*')->orderBy('created_at', 'desc')->orderBy('status', 'asc');
+            $data = ProblemList::with(['supplier', 'part'])->select('problem_lists.*');
         }
+
+        // Apply filter by supplier_id if present
+        if ($request->filled('supplier_id')) {
+            $data = $data->where('supplier_id', $request->input('supplier_id'));
+        }
+        // Apply filter by status if present
+        if ($request->filled('status')) {
+            $data = $data->where('status', $request->input('status'));
+        }
+
+        $data = $data->orderBy('created_at', 'desc')->orderBy('status', 'asc');
 
         return DataTables::of($data)
             ->addIndexColumn()
