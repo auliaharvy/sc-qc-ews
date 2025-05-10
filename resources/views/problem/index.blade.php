@@ -16,6 +16,7 @@
             </div>
         </div>
     </div>
+    @if(auth()->user()->roles->contains('name', 'admin'))
     <div class="row justify-content-end ">
     <form class="col-md-6 d-flex gap-2 mt-2" style="min-width:220px;" id="filterSupplierForm">
     <p class="fw-bold text-xs align-self-center mb-0">Filter:</p>
@@ -34,6 +35,7 @@
                     <button type="button" class="btn btn-sm ms-2 d-flex align-items-center justify-content-center" id="resetFilterBtn" style="width:32px;height:32px;padding:0;">reset</button>
                 </form>
     </div>
+    @endif
 
     <div class="row">
         <div class="col-md-12">
@@ -41,7 +43,7 @@
                 <table class="table table-bordered dataTable">
                     <thead>
                         <tr>
-                            <th>date</th>
+                            <th>Date</th>
                             <th>Part</th>
                             <th width="300px">Problem</th>
                             <th>Quantity</th>
@@ -136,13 +138,10 @@
             var table = $('.dataTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: {
-                    url: "{{ route('problems.index') }}",
-                    data: function(d) {
-                        d.supplier_id = $('#filterSupplier').val();
-                        d.status = $('#filterStatus').val();
-                    }
-                },
+                ajax: "{{ route('problems.index') }}",
+                order: [
+                    [8, 'asc']
+                ],
                 columnDefs: [{
                     "targets": "_all",
                     "className": "text-start"
@@ -160,14 +159,11 @@
                     {
                         data: 'formated_date',
                         name: 'formated_date',
-                        orderable: true,
-                        searchable: true
+                        
                     },
                     {
                         data: null,
-                        name: 'part_number',
-                        orderable: true,
-                        searchable: true,
+                        name: 'part_number',       
                         render: function(data, type, row) {
                             return row.part_number + ' - ' + row.part_name;
                         }
@@ -175,50 +171,43 @@
                     {
                         data: 'problem_description',
                         name: 'problem_description',
-                        orderable: false,
+                        orderable: true,
                         searchable: false
                     },
                     {
                         data: 'quantity_affected',
                         name: 'quantity_affected',
-                        orderable: false,
-                        searchable: false
+                        
                     },
                     {
                         data: 'supplier_name',
                         name: 'supplier_name',
-                        orderable: false,
-                        searchable: false
+                      
                     },
                     {
                         data:'car',
                         name:'car',
-                        orderable: false,
-                        searchable: false
+                        
                     },
                     {
                         data:'a3_report',
                         name:'a3_report',
-                        orderable: false,
-                        searchable: false
+                        
                     },
                     {
                         data: 'finding_location',
                         name: 'finding_location',
-                        orderable: true,
-                        searchable: false
+                        
                     },
                     {
                         data: 'status',
                         name: 'status',
-                        orderable: true,
-                        searchable: false
+                        
                     },
                     {
                         data: 'action',
                         name: 'action',
-                        orderable: false,
-                        searchable: false
+                        
                     }
                 ]
             });

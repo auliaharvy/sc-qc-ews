@@ -23,26 +23,26 @@ class BnfService
         $request = request();
 
         if ($userRole == 'Admin Supplier') {
-            $data = Bnf::with(['supplier', 'part'])->select('bad_news_first.*')->where('supplier_id', $supplierId)->orderBy('created_at', 'desc')->orderBy('status', 'asc');
+            $data = Bnf::with(['supplier', 'part'])->select('bad_news_first.*')->where('supplier_id', $supplierId)->orderBy('created_at', 'desc')->orderBy('status', 'asc')->get();
         } else {
-            $data = Bnf::with(['supplier', 'part'])->select('bad_news_first.*')->orderBy('created_at', 'desc')->orderBy('status', 'asc');
+            $data = Bnf::with(['supplier', 'part'])->select('bad_news_first.*')->orderBy('created_at', 'desc')->orderBy('status', 'asc')->get();
         }
 
         // Apply filters from request
-        if ($request->filled('supplier_id')) {
-            $data = $data->where('supplier_id', $request->supplier_id);
-        }
-        if ($request->filled('part_id')) {
-            $data = $data->where('part_id', $request->part_id);
-        }
+        // if ($request->filled('supplier_id')) {
+        //     $data = $data->where('supplier_id', $request->supplier_id);
+        // }
+        // if ($request->filled('part_id')) {
+        //     $data = $data->where('part_id', $request->part_id);
+        // }
 
-        if ($request->filled('problem')) {
-            $data = $data->where('problem', $request->problem);
-        }
+        // if ($request->filled('problem')) {
+        //     $data = $data->where('problem', $request->problem);
+        // }
 
-        if ($request->filled('status')) {
-            $data = $data->where('status', $request->status);
-        }
+        // if ($request->filled('status')) {
+        //     $data = $data->where('status', $request->status);
+        // }
 
         return DataTables::of($data)
             ->addIndexColumn()
