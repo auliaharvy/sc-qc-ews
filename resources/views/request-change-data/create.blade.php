@@ -115,6 +115,10 @@
                                         @if(isset($dailyCheckSheetData[$part->id]['id']))
                                             <input type="hidden" name="daily_checksheet_id[{{$part->id}}]" value="{{$dailyCheckSheetData[$part->id]['id']}}">
                                         @endif
+                                        @if(isset($dailyCheckSheetData[$part->id]['shift']))
+                                            <input type="hidden" name="shift[{{$part->id}}]" value="{{ in_array($dailyCheckSheetData[$part->id]['shift'] ?? '', ['day', 'night']) ? $dailyCheckSheetData[$part->id]['shift'] : 'day' }}"
+                                            >
+                                        @endif
 
                                     </td>
                                     <td class="input-cell">
@@ -157,54 +161,6 @@
             <button type="submit" class="btn btn-primary" id="submit-button">Simpan Data</button>
         </form>
 
-        {{-- <form method="POST" action="{{ route('request-change-data.store') }}" enctype="multipart/form-data">
-            @csrf
-            <div class="mb-3">
-                <div class="form-group">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th width="300px">Part Number</th>
-                                <th width="300px">Part Name</th>
-                                <th>Total Produksi</th>
-                                <th>OK</th>
-                                <th>NG</th>
-                                @foreach($ngTypes as $ngType)
-                                    <th>{{ $ngType }}</th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($parts as $part)
-                            <tr>
-                                <td>{{ $part->part_number }}</td>
-                                <td>{{ $part->part_name }}</td>
-                                <td>
-                                    <input type="number" class="form-control total-produced" name="total_produced[{{$part->id}}]" value="0" oninput="updateValues(this)">
-                                </td>
-                                <td>
-                                    <input type="number" class="form-control ok" name="ok[{{$part->id}}]" value="0" readonly>
-                                </td>
-                                <td>
-                                    <input type="number" class="form-control ng" name="ng[{{$part->id}}]" value="0" oninput="updateValues(this)" readonly>
-                                </td>
-                                @foreach($ngTypes as $ngType)
-                                <td>
-                                    <input type="number" class="form-control" name="ngtype-{{ $ngType }}[{{$part->id}}]" value="0" oninput="updateNG(this)">
-                                </td>
-                                @endforeach
-                                <input type="hidden" name="part_id[{{$part->id}}]" value="{{ $part->id }}">
-                                <input type="hidden" name="supplier_id[{{$part->id}}]" value="{{ auth()->user()->supplier_id }}">
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Simpan Data</button>
-
-        </form> --}}
 
         <script>
 

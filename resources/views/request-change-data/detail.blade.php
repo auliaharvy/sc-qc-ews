@@ -187,6 +187,11 @@
                                         <input type="number" class="form-control form-control-sm total-produced"
                                             name="total_produced[{{$part->id}}]" value="{{ isset($dailyCheckSheetData[$part->id]) ? $dailyCheckSheetData[$part->id]['total_produced'] : 0 }}" min="0"
                                             oninput="updateValues(this)" readonly>
+
+                                            @if(isset($dailyCheckSheetData[$part->id]['shift']))
+                                            <input type="hidden" name="shift[{{$part->id}}]" value="{{ in_array($dailyCheckSheetData[$part->id]['shift'] ?? '', ['day', 'night']) ? $dailyCheckSheetData[$part->id]['shift'] : 'day' }}"
+                                            >
+                                        @endif
                                         
 
                                     </td>
@@ -225,11 +230,16 @@
                 </div>
             </div>
 
-            @if(auth()->user()->roles->contains('name', 'admin'))
+            @php
+                $firstData = reset($requestChangeData);
+            @endphp
+
+
+            @if(auth()->user()->roles->contains('name', 'admin') && $firstData['status'] !== 'reject')
 
             <div class="d-flex gap-2 mt-2">
-            <button type="submit" class="btn btn-danger btn-md" id="reject-button">Reject Changes</button>
-                <button type="submit" class="btn btn-primary" id="submit-button">Accept Changes</button>
+            <button type="button" class="btn btn-danger btn-md" id="reject-button" name="action_type" value="reject">Reject Changes</button>
+            <button type="submit" class="btn btn-primary" id="submit-button" name="action_type" value="accept">Accept Changes</button>
 
             </div>
             @endif
@@ -267,7 +277,52 @@
                         Menyimpan Data...
                     `).prop('disabled', true);
                 });
+
+    
+
+                $(function() {
+                    $('#reject-button').on('click', function(e) {
+                e.preventDefault();
+                var ids = [];
+                $("input[name^='id_request']").each(function() {
+                    ids.push($(this).val());
+                });
+                Swal.fire({
+                    title: 'Apakah anda yakin?',
+                    text: "Menolak pengajuan data ini?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#82868',
+                    confirmButtonText: 'Ya, reject!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "POST",
+                            url: "{{ route('request-change-data.reject') }}",
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                request_change_data_id: ids
+                            },
+                            success: function(response) {
+                                Swal.fire('Berhasil', response.message, 'success').then(() => {
+                                    window.location.href = "{{ route('request-change-data') }}";
+                                });
+                            },
+                            error: function(xhr) {
+                                var errorMessage = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
+                                Swal.fire('Error', errorMessage, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+        });
         </script>
+
     </x-form-section>
 @endsection
 

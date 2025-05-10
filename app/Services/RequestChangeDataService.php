@@ -57,6 +57,7 @@ class RequestChangeDataService
             ->select([
                 'supplier_id',
                 'production_date',
+                DB::raw('MAX(status) as status'),
                 DB::raw('SUM(total_produced) as total_produced'),
                 DB::raw('SUM(total_ng) as total_ng'),
                 DB::raw('SUM(total_ok) as total_ok'),
@@ -71,12 +72,13 @@ class RequestChangeDataService
             ->select([
                 'supplier_id',
                 'production_date',
+                DB::raw('MAX(status) as status'),
                 DB::raw('SUM(total_produced) as total_produced'),
                 DB::raw('SUM(total_ng) as total_ng'),
                 DB::raw('SUM(total_ok) as total_ok'),
                 DB::raw('DATE(production_date) as formatted_date') // Menambahkan formatted_date
             ])
-            ->groupBy('supplier_id', 'formatted_date', 'production_date') // Menggunakan formatted_date untuk groupBy
+            ->groupBy('supplier_id', 'formatted_date', 'production_date')
             ->orderBy('production_date', 'DESC')
             ->get();
         }
@@ -87,7 +89,8 @@ class RequestChangeDataService
                 return $row->supplier->name ?? '-';
             })
             ->addColumn('status', function($row) {
-                return '<div class="badge bg-secondary py-2">Menunggu Persetujuan</div>';
+                return  $row->status == 'pending' ? '<span class="badge bg-primary ">Menunggu Persetujuan</span>' : '<span class="badge bg-danger">Ditolak</span>';
+
             })
             ->addColumn('formated_date', function($row) {
                 if (!$row->production_date) {
@@ -120,132 +123,21 @@ class RequestChangeDataService
             })
             ->addColumn('action', function ($row) {
                 $detailUrl = route('request-change-data.detail', ['supplier_id' => $row->supplier_id, 'production_date' => $row->production_date]);
-                $actionBtn = '<a href="' . $detailUrl . '" class="btn btn-warning btn-sm me-2" title="Detail"><i class="fa fa-eye"></i></a>';
+                $role = auth()->user()->roles()->first()->name;
+
+                if ($row->status === 'pending' && $role === 'admin') {
+                    $buttonText = 'Konfirmasi';
+                    $buttonClass = 'btn-primary';
+                } else {
+                    $buttonText = 'Detail';
+                    $buttonClass = 'btn-warning';
+                }
+            
+                $actionBtn = '<a href="' . $detailUrl . '" class="btn btn-sm me-2 ' . $buttonClass . '" title="' . $buttonText . '">' . $buttonText . '</a>';
                 return '<div class="d-flex">' . $actionBtn . '</div>';
             })
             ->rawColumns(['action', 'ng_ratio', 'oke_ratio', 'status'])
             ->make(true);
-    }
-
-    public function dataDashboardQuality($production_date)
-    {
-        $userRole = auth()->user()->roles()->first()->name;
-        $supplierId = auth()->user()->supplier_id;
-
-        if ($userRole == 'Admin Supplier') {
-            $data = DailyChecksheet::with(['supplier'])
-            ->select([
-                'supplier_id',
-                'production_date',
-                DB::raw('SUM(total_produced) as total_produced'),
-                DB::raw('SUM(total_ng) as total_ng'),
-                DB::raw('SUM(total_ok) as total_ok'),
-                DB::raw('DATE(production_date) as formatted_date'), // Menambahkan formatted_date
-                DB::raw('(SELECT part_id
-                      FROM daily_checksheet d2
-                      WHERE d2.supplier_id = daily_checksheet.supplier_id
-                        AND d2.production_date = daily_checksheet.production_date
-                      GROUP BY d2.part_id
-                      ORDER BY SUM(d2.total_ng) DESC
-                      LIMIT 1) as top_part_id')
-            ])
-            ->where('supplier_id', $supplierId)
-            ->groupBy('supplier_id', 'formatted_date', 'production_date') // Menggunakan formatted_date untuk groupBy
-            ->where('production_date', $production_date)
-            ->get();
-        } else {
-            $data = [];
-            $suppliers = Supplier::get()->all();
-
-            foreach ($suppliers as $supplier) {
-                // Get daily checksheet data grouped by part with aggregates
-                $checksheetData = DailyChecksheet::where('supplier_id', $supplier->id)
-                    ->where('production_date', $production_date)
-                    ->select(
-                        'part_id',
-                        DB::raw('SUM(total_produced) as total_produced'),
-                        DB::raw('SUM(total_ng) as total_ng'),
-                        DB::raw('SUM(total_ok) as total_ok')
-                    )
-                    ->groupBy('part_id')
-                    ->orderByDesc('total_ng')
-                    ->first();
-
-                $part = $checksheetData && $checksheetData->part_id ? Part::find($checksheetData->part_id) : null;
-
-                if ($checksheetData) {
-                    $topProblemName = '-';
-                    $topProblemQuantity = 0;
-
-                    // Only check for problems if there's NG
-                    if ($checksheetData->total_ng > 0) {
-                        // Get the checksheet with the highest NG count for this specific supplier
-                        $problemChecksheetData = DailyChecksheet::where('supplier_id', $supplier->id)
-                            ->where('production_date', $production_date)
-                            ->where('total_ng', '>', 0)
-                            ->select('id', 'part_id')
-                            ->orderByDesc('total_ng')
-                            ->first();
-
-                        if ($problemChecksheetData) {
-                            $topProblem = DailyChecksheetNg::where('daily_checksheet_id', $problemChecksheetData->id)
-                                ->where('quantity', '>', 0)
-                                ->orderByDesc('quantity')
-                                ->first();
-
-                            if ($topProblem) {
-                                $topProblemName = NgType::find($topProblem->ng_type_id)->name;
-                                $topProblemQuantity = $topProblem->quantity;
-                            }
-                        }
-                    } // End of total_ng > 0 check
-
-                    // No need to fetch part again as it's already fetched above
-                }
-
-                // Date formatting code remains the same
-                $date = \Carbon\Carbon::parse($production_date);
-                $dayName = $this->days[$date->format('l')];
-                $monthName = $this->months[$date->format('F')];
-                $formattedDate = "$dayName, " . $date->format('d ') . $monthName . $date->format(' Y');
-
-                $data[] = [
-                    'supplier_id' => $supplier->id,
-                    'supplier_name' => $supplier->name,
-                    'total_produced' => $checksheetData->total_produced ?? 0,
-                    'total_ok' => $checksheetData->total_ok ?? 0,
-                    'total_ng' => $checksheetData->total_ng ?? 0,
-                    'part_name' => $part->part_name ?? '-',
-                    'part_number' => $part->part_number ?? '-',
-                    'judgement' => $checksheetData && $checksheetData->total_produced > 0
-                        ? ($checksheetData->total_ng / $checksheetData->total_produced) * 100 >= 5
-                            ? 'NG'
-                            : 'Good'
-                        : '-',
-                    'problem' => $topProblemName ?? '-', // Use this instead of top_problem_name for consistency
-                    'problem_quantity' => $topProblemQuantity ?? 0, // Add the quantity as a separate field
-                    // 'top_problem' => $topProblem ?? '-', // Remove this line to avoid sending the entire object
-                    'ng_ratio' => $checksheetData && $checksheetData->total_produced > 0
-                        ? number_format(($checksheetData->total_ng / $checksheetData->total_produced) * 100, 0) . '%'
-                        : '0%',
-                    'ok_ratio' => $checksheetData && $checksheetData->total_produced > 0
-                        ? number_format(($checksheetData->total_ok / $checksheetData->total_produced) * 100, 0) . '%'
-                        : '0%',
-                    'production_date' => $production_date ?? '-',
-                    'formatted_date' => $formattedDate ?? '-',
-                ];
-
-                $topProblemName = '-';
-                $topProblemQuantity = 0;
-
-            }
-
-        }
-
-        return $data;
-        // query top part
-        // $topPartIds = $data->pluck('top_part_id')->filter()->unique();
-        // $parts = Part::whereIn('id', $topPartIds)->get()->keyBy('id');
     }
 
     public function getDetailBySupplierAndDate($supplier_id, $production_date)
@@ -260,6 +152,7 @@ class RequestChangeDataService
                     'id' => $group->first()->id,
                     'part_id' => $group->first()->part_id,
                     'part_name' => $group->first()->part->part_name ?? '-',
+                    'shift' => $group->first()->shift ?? '-',
                     'total_produced' => $group->sum('total_produced'),
                     'total_ng' => $group->sum('total_ng'),
                     'total_ok' => $group->sum('total_ok'),
@@ -270,12 +163,6 @@ class RequestChangeDataService
         $result = [];
 
         foreach ($details as $detail) {
-            // foreach ($ngTypes as $ngType) {
-            //     // Cari ngType yang sesuai dalam relasi ngTypes dan ambil quantity jika ada
-            //     $ngTypeData = $detail->ngTypes->firstWhere('name', $ngType);
-            //     $ngTypesData[$ngType] = $ngTypeData ? $ngTypeData->pivot->quantity : 0;
-            // }
-
             $ngRatio = $detail['total_produced'] > 0 ? number_format(($detail['total_ng'] / $detail['total_produced']) * 100, 0) . '%' : '0%';
             $okeRatio = $detail['total_produced'] > 0 ? number_format(($detail['total_ok'] / $detail['total_produced']) * 100, 0) . '%' : '0%';
             $ngRatioNumber = $detail['total_produced'] > 0 ? ($detail['total_ng'] / $detail['total_produced']) * 100 : 0;
@@ -284,6 +171,7 @@ class RequestChangeDataService
                 'id' => $detail['id'],
                 'part_id' => $detail['part_id'],
                 'part_name' => $detail['part_name'] ?? '-',
+                'shift' => $detail['shift'] ?? '-',
                 'total_produced' => $detail['total_produced'],
                 'total_ng' => $detail['total_ng'],
                 'total_ok' => $detail['total_ok'],
@@ -310,6 +198,7 @@ class RequestChangeDataService
                 return [
                     'id' => $group->first()->id,
                     'daily_checksheet_id' => $group->first()->daily_checksheet_id,
+                    'status' => $group->first()->status,
                     'part_id' => $group->first()->part_id,
                     'part_name' => $group->first()->part->part_name ?? '-',
                     'part_number' => $group->first()->part->part_number ?? '-',
@@ -323,11 +212,6 @@ class RequestChangeDataService
         $result = [];
 
         foreach ($details as $detail) {
-            // foreach ($ngTypes as $ngType) {
-            //     // Cari ngType yang sesuai dalam relasi ngTypes dan ambil quantity jika ada
-            //     $ngTypeData = $detail->ngTypes->firstWhere('name', $ngType);
-            //     $ngTypesData[$ngType] = $ngTypeData ? $ngTypeData->pivot->quantity : 0;
-            // }
 
             $ngRatio = $detail['total_produced'] > 0 ? number_format(($detail['total_ng'] / $detail['total_produced']) * 100, 0) . '%' : '0%';
             $okeRatio = $detail['total_produced'] > 0 ? number_format(($detail['total_ok'] / $detail['total_produced']) * 100, 0) . '%' : '0%';
@@ -346,6 +230,7 @@ class RequestChangeDataService
                 'ng_ratio' => $ngRatio,
                 'oke_ratio' => $okeRatio,
                 'oke_ratio_number' => $okeRatioNumber,
+                'status' => $detail['status'],
             ];
         }
 
@@ -361,41 +246,6 @@ class RequestChangeDataService
         return $parts;
     }
 
-    public function getDataByDay($day)
-    {
-        // Mengambil data dari DailyChecksheet berdasarkan production_date
-        $data = DailyChecksheet::with(['part', 'ngTypes'])
-            ->whereDate('production_date', $day)
-            ->where('supplier_id', auth()->user()->supplier_id)
-            ->get();
-
-        // Inisialisasi array untuk menyimpan hasil
-        $result = [];
-
-        // Mengambil semua nama NgType
-        $ngTypes = NgType::pluck('name')->toArray();
-
-        foreach ($data as $item) {
-            $ngTypesData = [];
-            foreach ($ngTypes as $ngType) {
-                // Cari ngType yang sesuai dalam relasi ngTypes dan ambil quantity jika ada
-                $ngTypeData = $item->ngTypes->firstWhere('name', $ngType);
-                $ngTypesData[$ngType] = $ngTypeData ? $ngTypeData->pivot->quantity : 0;
-            }
-
-            $result[] = [
-                'id' => $item->id,
-                'supplier_id' => $item->supplier_id,
-                'part_id' => $item->part_id,
-                'total_produced' => $item->total_produced,
-                'ng' => $item->total_ng ?? null,
-                'good' => $item->total_ok ?? null,
-                'ng_types' => $ngTypesData,
-            ];
-        }
-
-        return response()->json($result);
-    }
 
     public function getTitle($supplier_id, $production_date)
     {
@@ -428,15 +278,13 @@ class RequestChangeDataService
                         'supplier_id' => $item['supplier_id'],
                         'part_id' => $item['part_id'],
                         'production_date' => $item['production_date'],
-                        'shift' => $item['shift'],
+                        'shift' => $item['shift'] ,
                         'total_produced' => $item['total_produced'] ?? 0,
                         'total_ng' => $item['ng'] ?? 0,
                         'total_ok' => $item['good'] ?? 0,
                         'created_at' => now()->setTimezone('Asia/Jakarta'),
                         'updated_at' => now()->setTimezone('Asia/Jakarta'),
                     ]);
-
-                    // If you need to handle details, add logic here for RequestChangeDataDetail, similar to how ng_types were handled before.
 
                     foreach ($item['ng_types'] as $ngType) {
                         $dailyChecksheetNg = RequestChangeDataDetail::create([
@@ -451,24 +299,11 @@ class RequestChangeDataService
                 }
             }
 
-            $requestChangeData = RequestChangeData::where('supplier_id', $supplier_id)
-                    ->where('production_date', $production_date)
-                    ->select(
-                        'part_id',
-                        DB::raw('SUM(total_produced) as total_produced'),
-                        DB::raw('SUM(total_ng) as total_ng'),
-                        DB::raw('SUM(total_ok) as total_ok')
-                    )
-                    ->groupBy('part_id')
-                    ->orderByDesc('total_ng')
-                    ->first();
-
             DB::commit();
 
             return [
                 'success' => true,
                 'message' => 'Request Change Data berhasil diajukan',
-                'checksheet' => $requestChangeData,
             ];
 
         } catch (\Exception $e) {
@@ -480,79 +315,7 @@ class RequestChangeDataService
         }
     }
 
-    private function generatePartCode()
-    {
-        $latest = Part::latest()->first();
-        $sequence = $latest ? intval(substr($latest->code, 3)) + 1 : 1;
-        return 'PRT' . str_pad($sequence, 5, '0', STR_PAD_LEFT);
-    }
-
-    public function update($data, $id)
-    {
-        DB::beginTransaction();
-
-        try {
-            $part = Part::findOrFail($id);
-
-            $part->update([
-                'supplier_id' => $data['supplier_id'],
-                'part_number' => $data['part_number'],
-                'part_name' => $data['part_name']
-            ]);
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'message' => 'Part berhasil diperbarui',
-                'data' => $part
-            ];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return [
-                'success' => false,
-                'message' => 'Gagal memperbarui part: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    public function delete($id)
-    {
-        DB::beginTransaction();
-
-        try {
-            $part = Part::find($id);
-
-            if ($part) {
-                // Hapus relasi checksheet dan problem list
-                $part->checksheets()->delete();
-                $part->problems()->delete();
-
-                $part->delete();
-
-                DB::commit();
-
-                return [
-                    'success' => true,
-                    'message' => 'Data berhasil dihapus.',
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Data tidak ditemukan.',
-                ];
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return [
-                'success' => false,
-                'message' => 'Gagal menghapus data: ' . $e->getMessage(),
-            ];
-        }
-    }
-
+    
     public function updateRequestChange($data)
     {
         DB::beginTransaction();
@@ -620,4 +383,36 @@ class RequestChangeDataService
         }
     }
 
+    public function rejectRequestChange($data){
+        DB::beginTransaction();
+        try {
+            foreach ($data as $id) {
+                if (empty($id)) {
+                    continue;
+                }
+    
+                $requestChange = RequestChangeData::find($id);
+    
+                if ($requestChange) {
+                    $requestChange->update([
+                        'status' => 'reject',
+                    ]);
+                }
+            }
+    
+            DB::commit();
+    
+            return [
+                'success' => true,
+                'message' => 'Request Change Data Ditolak',
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'success' => false,
+                'message' => 'Gagal menolak Request Change Data: ' . $e->getMessage()
+            ];
+        }
+    }
+    
 }

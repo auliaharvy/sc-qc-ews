@@ -24,9 +24,7 @@
                             <th>Total Produksi</th>
                             <th>OK Ratio</th>
                             <th>NG Ratio</th>
-                             @if(auth()->user()->roles->contains('name', 'Admin Supplier'))
                             <th>Status</th>
-                            @endif
                             <th width="100px">Action</th>
                         </tr>
                     </thead>
@@ -82,12 +80,10 @@
                         data: 'oke_ratio',
                         name: 'oke_ratio'
                     },
-                    @if(auth()->user()->roles->contains('name', 'Admin Supplier'))
                     {
                         data: 'status',
                         name: 'status'
                     },
-                    @endif
                     {
                         data: 'action',
                         name: 'action',

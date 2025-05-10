@@ -20,6 +20,7 @@ class RequestChangeData extends Model
         'total_produced',
         'total_ok',
         'total_ng',
+        'status',
     ];
 
     public function details()

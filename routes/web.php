@@ -58,6 +58,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/request-change-data/store', [RequestChangeDataController::class, 'store'])->name('request-change-data.store');
     Route::get('/request-change-data/detail/{supplier_id}/{production_date}', [RequestChangeDataController::class, 'detail'])->name('request-change-data.detail');
     Route::put('/request-change-data/update', [RequestChangeDataController::class, 'update'])->name('request-change-data.update');
+    Route::post('/request-change-data/reject', [RequestChangeDataController::class, 'reject'])->name('request-change-data.reject');
+
 
 
 
