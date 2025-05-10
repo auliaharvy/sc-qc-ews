@@ -84,6 +84,7 @@ class DailyChecksheetService
             ->addColumn('supplier_name', function($row) {
                 return $row->supplier->name ?? '-';
             })
+    
             ->addColumn('formated_date', function($row) {
                 if (!$row->production_date) {
                     return '-';
@@ -114,8 +115,12 @@ class DailyChecksheetService
                 }
             })
             ->addColumn('action', function ($row) {
-                $actionBtn = '<a href="' . route('daily-check-sheet.detail', ['supplier_id' => $row->supplier_id, 'production_date' => $row->production_date]) . '"
-                            class="edit btn btn-warning btn-sm me-2"><i class="fa fa-eye"></i></a>';
+                $detailUrl = route('daily-check-sheet.detail', ['supplier_id' => $row->supplier_id, 'production_date' => $row->production_date]);
+                $editUrl = route('request-change-data.create', ['supplier_id' => $row->supplier_id, 'production_date' => $row->production_date]);
+                $actionBtn = '<a href="' . $detailUrl . '" class="btn btn-warning btn-sm me-2" title="Detail"><i class="fa fa-eye"></i></a>';
+                if(auth()->user()->roles->contains('name', 'Admin Supplier')){
+                    $actionBtn .= '<a href="' . $editUrl . '" class="btn btn-primary btn-sm" title="Edit"><i class="fa fa-edit"></i></a>';
+                }
                 return '<div class="d-flex">' . $actionBtn . '</div>';
             })
             ->rawColumns(['action', 'ng_ratio', 'oke_ratio'])
@@ -252,6 +257,7 @@ class DailyChecksheetService
             ->groupBy('part_id')
             ->map(function ($group) {
                 return [
+                    'id' => $group->first()->id,
                     'part_id' => $group->first()->part_id,
                     'part_name' => $group->first()->part->part_name ?? '-',
                     'total_produced' => $group->sum('total_produced'),
@@ -275,6 +281,7 @@ class DailyChecksheetService
             $ngRatioNumber = $detail['total_produced'] > 0 ? ($detail['total_ng'] / $detail['total_produced']) * 100 : 0;
             $okeRatioNumber = $detail['total_produced'] > 0 ? ($detail['total_ok'] / $detail['total_produced']) * 100 : 0;
             $result[] = [
+                'id' => $detail['id'],
                 'part_id' => $detail['part_id'],
                 'part_name' => $detail['part_name'] ?? '-',
                 'total_produced' => $detail['total_produced'],
@@ -556,6 +563,10 @@ class DailyChecksheetService
             ];
         }
     }
+
+
+    
+    
 
 
 }

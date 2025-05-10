@@ -15,6 +15,7 @@
             </div>
         </div>
     </div>
+    @if(auth()->user()->roles->contains('name', 'admin'))
 
     <div class="row justify-content-end">
     <form class="col-md-8 d-flex gap-2 mt-3" style="min-width:220px;" id="filterSupplierForm">
@@ -45,7 +46,8 @@
         <button type="button" class="btn btn-sm ms-2 d-flex align-items-center justify-content-center" id="resetFilterBtn" style="width:32px;height:32px;padding:0;">reset</button>
     </form>
     </div>
-    
+    @endif
+
     <div class="row">
         <div class="col-md-12">
             <div class="table-responsive text-left">
@@ -76,14 +78,17 @@
             var table = $('.dataTable').DataTable({
                 processing: true,
                 serverSide: true,
+                order: [
+                    [5, 'asc']
+                ],
                 ajax: {
                     url: "{{ route('bad-news-firsts.index') }}",
-                    data: function(d) {
-                        d.supplier_id = $('#filterSupplier').val();
-                        d.part_id = $('#filterPart').val();
-                        d.status = $('#filterStatus').val();
-                        d.problem = $('#filterProblem').val();
-                    }
+                    // data: function(d) {
+                    //     d.supplier_id = $('#filterSupplier').val();
+                    //     d.part_id = $('#filterPart').val();
+                    //     d.status = $('#filterStatus').val();
+                    //     d.problem = $('#filterProblem').val();
+                    // }
                 },
                 columnDefs: [{
                     "targets": "_all",
@@ -102,31 +107,31 @@
                     {
                         data: 'supplier_name',
                         name: 'supplier_name',
-                        orderable: true,
+                        // orderable: true,
                         searchable: true
                     },
                     {
                         data: 'part_name',
                         name: 'part_name',
-                        orderable: true,
+                        // orderable: true,
                         searchable: true
                     },
                     {
                         data: 'problem',
                         name: 'problem',
-                        orderable: false,
+                        // orderable: false,
                         searchable: false
                     },
                     {
                         data: 'description',
                         name: 'description',
-                        orderable: false,
+                        // orderable: false,
                         searchable: false
                     },
                     {
                         data: 'qty',
                         name: 'qty',
-                        orderable: false,
+                        // orderable: false,
                         searchable: false
                     },
                     {
@@ -138,7 +143,7 @@
                     {
                         data: 'action',
                         name: 'action',
-                        orderable: false,
+                        // orderable: false,
                         searchable: false
                     }
                 ]

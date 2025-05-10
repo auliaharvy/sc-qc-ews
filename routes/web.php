@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DailyCheckSheetController;
+use App\Http\Controllers\RequestChangeDataController;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
@@ -49,6 +50,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/daily-check-sheet/detail-data/{supplier_id}/{production_date}', [DailyCheckSheetController::class, 'detailData'])->name('daily-check-sheet.detail-data');
     Route::get('/daily-check-sheet-input', [DailyCheckSheetController::class, 'input'])->name('daily-check-sheet-input');
     // Daily checksheet : end
+
+
+    //Request Change Data : start
+    Route::get('/request-change-data', [RequestChangeDataController::class, 'index'])->name('request-change-data');
+    Route::get('/request-change-data/create/{supplier_id}/{production_date}', [RequestChangeDataController::class, 'create'])->name('request-change-data.create');
+    Route::post('/request-change-data/store', [RequestChangeDataController::class, 'store'])->name('request-change-data.store');
+    Route::get('/request-change-data/detail/{supplier_id}/{production_date}', [RequestChangeDataController::class, 'detail'])->name('request-change-data.detail');
+    Route::put('/request-change-data/update', [RequestChangeDataController::class, 'update'])->name('request-change-data.update');
+    Route::post('/request-change-data/reject', [RequestChangeDataController::class, 'reject'])->name('request-change-data.reject');
+
+
+
+
+
 
     Route::resource('roles', RoleController::class);
     Route::resource('navigation', NavigationController::class);

@@ -5,16 +5,7 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="fw-bold">{{ $title }}</h4>
-
-                @can('create inspeksi')
-                @if(auth()->user()->roles->contains('name', 'Admin Supplier'))
-
-                    <a href="{{ route('daily-check-sheet.create') }}" class="btn btn-primary btn-sm" id="createSuppliers">
-                        <i class="ti-plus"></i>
-                        Tambah Data
-                    </a>
-                @endif
-                @endcan
+                
             </div>
         </div>
     </div>
@@ -33,6 +24,7 @@
                             <th>Total Produksi</th>
                             <th>OK Ratio</th>
                             <th>NG Ratio</th>
+                            <th>Status</th>
                             <th width="100px">Action</th>
                         </tr>
                     </thead>
@@ -51,7 +43,7 @@
             var table = $('.dataTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('daily-check-sheet') }}",
+                ajax: "{{ route('request-change-data') }}",
                 columnDefs: [{
                     "targets": "_all",
                     "className": "text-start"
@@ -69,7 +61,6 @@
                     {
                         data: 'formated_date',
                         name: 'formated_date'
-                        
                     },
                     @if(auth()->user()->roles->contains('name', 'admin'))
                     {
@@ -88,6 +79,10 @@
                     {
                         data: 'oke_ratio',
                         name: 'oke_ratio'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status'
                     },
                     {
                         data: 'action',

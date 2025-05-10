@@ -27,6 +27,12 @@
                     <span>Daily Checksheet</span>
                 </a>
             </li>
+            <li class="{{ request()->routeIs('request-change-data') ? 'active' : '' }}">
+                <a href="{{ route('request-change-data') }}" class="link">
+                <i class="fa-solid fa-file-pen"></i>                    
+                <span>Request Daily Checklist</span>
+                </a>
+            </li>
             @can('read users')
             <li class="menu-category">
                 <span class="text-uppercase">User Interface</span>
