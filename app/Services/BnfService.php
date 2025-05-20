@@ -54,9 +54,7 @@ $query = Bnf::with(['supplier', 'part'])->select('bad_news_first.*');
             ->addColumn('supplier_name', function($row) {
                 return $row->supplier->name ?? '-';
             })
-            ->addColumn('status', function($row) {
-                return $row->status;
-            })
+            
             ->addColumn('status', function($row) {
                 return $row->status == 'open' ? '<span class="badge bg-danger text-white">Belum Selesai</span>' : '<span class="badge bg-success">Selesai</span>';
             })

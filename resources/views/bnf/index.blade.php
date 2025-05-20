@@ -89,7 +89,7 @@
                     }
                 },
                 order: [
-                    [0, 'desc']
+                    [5, 'asc']
                 ],
                 columnDefs: [{
                     "targets": "_all",
