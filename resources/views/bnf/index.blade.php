@@ -78,22 +78,25 @@
             var table = $('.dataTable').DataTable({
                 processing: true,
                 serverSide: true,
+            
+                ajax: {
+                    url: "{{ route('bad-news-firsts.index') }}",
+                    data: function(d) {
+                        d.supplier_id = $('#filterSupplier').val();
+                        d.part_id = $('#filterPart').val();
+                        d.status = $('#filterStatus').val();
+                        d.problem = $('#filterProblem').val();
+                    }
+                },
                 order: [
                     [5, 'asc']
                 ],
-                ajax: {
-                    url: "{{ route('bad-news-firsts.index') }}",
-                    // data: function(d) {
-                    //     d.supplier_id = $('#filterSupplier').val();
-                    //     d.part_id = $('#filterPart').val();
-                    //     d.status = $('#filterStatus').val();
-                    //     d.problem = $('#filterProblem').val();
-                    // }
-                },
                 columnDefs: [{
                     "targets": "_all",
                     "className": "text-start"
                 }],
+
+    
                 columns: [
                     // {
                     //     data: 'id',
@@ -106,62 +109,60 @@
                     // },
                     {
                         data: 'supplier_name',
-                        name: 'supplier_name',
-                        // orderable: true,
+                        name: 'supplier_id',
+                        orderable: true,
                         searchable: true
                     },
                     {
                         data: 'part_name',
-                        name: 'part_name',
-                        // orderable: true,
+                        name: 'part_id',
+                        orderable: true,
                         searchable: true
                     },
                     {
                         data: 'problem',
                         name: 'problem',
-                        // orderable: false,
-                        searchable: false
+                        orderable: true,
+                        searchable: true
                     },
                     {
                         data: 'description',
                         name: 'description',
-                        // orderable: false,
+                        orderable: false,
                         searchable: false
                     },
                     {
                         data: 'qty',
                         name: 'qty',
-                        // orderable: false,
-                        searchable: false
+                        orderable: true,
+                        searchable: true
                     },
                     {
-                        data: 'status',
-                        name: 'status',
+                        data:'status',
+                        name:'status',
                         orderable: true,
-                        searchable: false
+                        searchable: true
                     },
                     {
                         data: 'action',
                         name: 'action',
-                        // orderable: false,
+                        orderable: false,
                         searchable: false
                     }
                 ]
             });
 
             // Filter event handlers
-            $('#filterSupplier, #filterPart, #filterStatus').on('change', function() {
-                table.draw();
+            $('#filterSupplier, #filterPart, #filterStatus, #filterProblem').on('change', function() {
+                table.ajax.reload();
             });
-            $('#filterProblem').on('change', function() {
-                table.draw();
-            });
+            
             $('#resetFilterBtn').on('click', function() {
                 $('#filterSupplier').val('');
                 $('#filterPart').val('');
                 $('#filterStatus').val('');
                 $('#filterProblem').val('');
-                table.draw();
+                table.ajax.reload();
             });
 
             // selesaikan bnf

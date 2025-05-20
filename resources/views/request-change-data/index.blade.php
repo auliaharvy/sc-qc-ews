@@ -48,6 +48,9 @@
                     "targets": "_all",
                     "className": "text-start"
                 }],
+                order: [
+                    [5, 'desc']
+                ],
                 columns: [
                     {
                         data: 'id',

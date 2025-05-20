@@ -138,9 +138,15 @@
             var table = $('.dataTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('problems.index') }}",
+                ajax: {
+                    url: "{{ route('problems.index') }}",
+                    data: function(d) {
+                        d.supplier_id = $('#filterSupplier').val();
+                        d.status = $('#filterStatus').val();
+                    }
+                },
                 order: [
-                    [8, 'asc']
+                    [0, 'desc']
                 ],
                 columnDefs: [{
                     "targets": "_all",
@@ -158,12 +164,15 @@
                     // },
                     {
                         data: 'formated_date',
-                        name: 'formated_date',
-                        
+                        name: 'production_date',
+                        orderable: true,
+                        searchable: true
                     },
                     {
                         data: null,
-                        name: 'part_number',       
+                        name: 'part_id',
+                        orderable: true,
+                        searchable: true,
                         render: function(data, type, row) {
                             return row.part_number + ' - ' + row.part_name;
                         }
@@ -172,46 +181,53 @@
                         data: 'problem_description',
                         name: 'problem_description',
                         orderable: true,
-                        searchable: false
+                        searchable: true
                     },
                     {
                         data: 'quantity_affected',
                         name: 'quantity_affected',
-                        
+                        orderable: true,
+                        searchable: true
                     },
                     {
                         data: 'supplier_name',
-                        name: 'supplier_name',
-                      
+                        name: 'supplier_id',
+                        orderable: true,
+                        searchable: true
                     },
                     {
-                        data:'car',
-                        name:'car',
-                        
+                        data: 'car',
+                        name: 'car_file',
+                        orderable: false,
+                        searchable: false
                     },
                     {
-                        data:'a3_report',
-                        name:'a3_report',
-                        
+                        data: 'a3_report',
+                        name: 'a3_report',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'finding_location',
                         name: 'finding_location',
-                        
+                        orderable: true,
+                        searchable: true
                     },
                     {
                         data: 'status',
                         name: 'status',
-                        
+                        orderable: true,
+                        searchable: true
                     },
                     {
                         data: 'action',
                         name: 'action',
-                        
+                        orderable: false,
+                        searchable: false
                     }
                 ]
             });
-            $('#filterSupplier, #filterStatus').on('change', function() {
+            $('#filterStatus, #filterSupplier').on('change', function() {
                 table.ajax.reload();
             });
             $('#resetFilterBtn').on('click', function() {
