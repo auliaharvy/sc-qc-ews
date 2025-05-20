@@ -22,35 +22,40 @@ class BnfService
         $supplierId = auth()->user()->supplier_id;
         $request = request();
 
+$query = Bnf::with(['supplier', 'part'])->select('bad_news_first.*');
+
+       
+
         if ($userRole == 'Admin Supplier') {
-            $data = Bnf::with(['supplier', 'part'])->select('bad_news_first.*')->where('supplier_id', $supplierId)->orderBy('created_at', 'desc')->orderBy('status', 'asc')->get();
-        } else {
-            $data = Bnf::with(['supplier', 'part'])->select('bad_news_first.*')->orderBy('created_at', 'desc')->orderBy('status', 'asc')->get();
-        }
+    $query = Bnf::with(['supplier', 'part'])->select('bad_news_first.*')->where('supplier_id', $supplierId);
+        } 
 
         // Apply filters from request
-        // if ($request->filled('supplier_id')) {
-        //     $data = $data->where('supplier_id', $request->supplier_id);
-        // }
-        // if ($request->filled('part_id')) {
-        //     $data = $data->where('part_id', $request->part_id);
-        // }
+        if ($request->filled('supplier_id')) {
+    $query->where('supplier_id', $request->supplier_id);
+        }
+        if ($request->filled('part_id')) {
+    $query->where('part_id', $request->part_id);
+        }
 
-        // if ($request->filled('problem')) {
-        //     $data = $data->where('problem', $request->problem);
-        // }
+        if ($request->filled('problem')) {
+    $query->where('problem', $request->problem);
+        }
 
-        // if ($request->filled('status')) {
-        //     $data = $data->where('status', $request->status);
-        // }
+        if ($request->filled('status')) {
+     $query->where('status', $request->input('status'));
+        }
 
-        return DataTables::of($data)
+        return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('part_name', function($row) {
                 return $row->part->part_name ?? '-';
             })
             ->addColumn('supplier_name', function($row) {
                 return $row->supplier->name ?? '-';
+            })
+            ->addColumn('status', function($row) {
+                return $row->status;
             })
             ->addColumn('status', function($row) {
                 return $row->status == 'open' ? '<span class="badge bg-danger text-white">Belum Selesai</span>' : '<span class="badge bg-success">Selesai</span>';

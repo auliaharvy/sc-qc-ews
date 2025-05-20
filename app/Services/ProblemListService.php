@@ -49,29 +49,24 @@ class ProblemListService
         $supplierId = auth()->user()->supplier_id;
         $request = request();
 
+        // Start query builder
+        $query = ProblemList::with(['supplier', 'part'])->select('problem_lists.*');
+
         if ($userRole == 'Admin Supplier') {
-            $data = ProblemList::with(['supplier', 'part'])->select('problem_lists.*')->where('supplier_id', $supplierId)
-            ->orderBy('status', 'asc')
-            ->get();
-        } else {
-            $data = ProblemList::with(['supplier', 'part'])->select('problem_lists.*')
-            ->orderBy('created_at', 'desc')
-            ->orderBy('status', 'asc')
-            ->get();
+            $query->where('supplier_id', $supplierId);
         }
 
         // Apply filter by supplier_id if present
-        // if ($request->filled('supplier_id')) {
-        //     $data = $data->where('supplier_id', $request->input('supplier_id'));
-        // }
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->input('supplier_id'));
+        }
         // Apply filter by status if present
-        // if ($request->filled('status')) {
-        //     $data = $data->where('status', $request->input('status'));
-        // }
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
 
-        // $data = $data->orderBy('created_at', 'desc')->orderBy('status', 'asc');
-
-        return DataTables::of($data)
+        // DataTables will handle ordering and pagination automatically
+        return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('part_name', function($row) {
                 return $row->part->part_name ?? '-';
@@ -101,19 +96,13 @@ class ProblemListService
                     if (empty($row->car_file)) {
                         return '-';
                     } else {
-                        return '<a href="' . url($row->car_file) . '" class="btn btn-success btn-sm" download>
-                                    <i class="ti-download"></i> Download CAR
-                                </a>';
+                        return '<a href="' . url($row->car_file) . '" class="btn btn-success btn-sm" download>\n                                    <i class="ti-download"></i> Download CAR\n                                </a>';
                     }
                 } else {
                     if (empty($row->car_file)) {
-                        return '<button type="button" class="btn btn-primary btn-sm upload-car" data-id="' . $row->id . '">
-                                    <i class="ti-upload"></i> Upload CAR
-                                </button>';
+                        return '<button type="button" class="btn btn-primary btn-sm upload-car" data-id="' . $row->id . '">\n                                    <i class="ti-upload"></i> Upload CAR\n                                </button>';
                     } else {
-                        return '<a href="' . url($row->car_file) . '" class="btn btn-success btn-sm" download>
-                                    <i class="ti-download"></i> Download CAR
-                                </a>';
+                        return '<a href="' . url($row->car_file) . '" class="btn btn-success btn-sm" download>\n                                    <i class="ti-download"></i> Download CAR\n                                </a>';
                     }
                 }
 
@@ -125,22 +114,16 @@ class ProblemListService
                         return '-';
                     } else {
                         if(empty($row->a3_report)) {
-                            return '<button type="button" class="btn btn-primary btn-sm upload-a3-report" data-id="' . $row->id . '">
-                                    <i class="ti-upload"></i> Upload A3 Report
-                                </button>';
+                            return '<button type="button" class="btn btn-primary btn-sm upload-a3-report" data-id="' . $row->id . '">\n                                    <i class="ti-upload"></i> Upload A3 Report\n                                </button>';
                         } else {
-                            return '<a href="'. url($row->a3_report) . '" class="btn btn-success btn-sm" download>
-                                        <i class="ti-download"></i> Download A3 Report
-                                    </a>';
+                            return '<a href="'. url($row->a3_report) . '" class="btn btn-success btn-sm" download>\n                                        <i class="ti-download"></i> Download A3 Report\n                                    </a>';
                         }
                     }
                 } else {
                     if (empty($row->a3_report)) {
                         return '-';
                     } else {
-                        return '<a href="'. url($row->a3_report) . '" class="btn btn-success btn-sm" download>
-                                        <i class="ti-download"></i> Download A3 Report
-                                    </a>';
+                        return '<a href="'. url($row->a3_report) . '" class="btn btn-success btn-sm" download>\n                                        <i class="ti-download"></i> Download A3 Report\n                                    </a>';
                     }
                 }
 
@@ -150,8 +133,7 @@ class ProblemListService
                     $actionBtn = '';
                     if (auth()->user()->id == $row->created_by) {
                         if(empty($row->car_file)) {
-                            $actionBtn .= '<a href="' . route('parts.edit', $row->id) . '"
-                                class="edit btn btn-warning btn-sm me-2"><i class="ti-pencil-alt"></i></a>';
+                            $actionBtn .= '<a href="' . route('parts.edit', $row->id) . '"\n                                class="edit btn btn-warning btn-sm me-2"><i class="ti-pencil-alt"></i></a>';
                         }
                     }
 
