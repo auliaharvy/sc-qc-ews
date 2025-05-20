@@ -6,13 +6,13 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="fw-bold">{{ $title }}</h4>
 
-                @can('create parts')
+                @can('create problems')
                     <a href="{{ route('problems.create') }}" class="btn btn-primary btn-sm" id="createParts">
                         <i class="ti-plus"></i>
                         Tambah Data
                     </a>
                 @endcan
-                
+
             </div>
         </div>
     </div>

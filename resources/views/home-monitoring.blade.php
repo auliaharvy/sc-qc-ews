@@ -7,7 +7,7 @@
             <a href="{{ route('home') }}" class="link">
                 <div class="d-flex align-items-center justify-content-center">
                     <img src="{{ asset('assets/images/sc-logo.png') }}" alt="Logo" height="50" class="me-3">
-                    <h1 class="mb-0">Early Warning System</h1>
+                    <h1 class="mb-0">Quality EWS</h1>
                 </div>
             </a>
         </div>
