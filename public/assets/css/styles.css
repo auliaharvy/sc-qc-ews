@@ -538,6 +538,40 @@ section {
     display: none;
 }
 
+
+.bg-not-submitted {
+    background-color: #edd405;
+}
+
+.bg-not-production {
+    background-color: #0c28a4;
+}
+
+.bg-not-good {
+    background-color: #ac1717;
+}
+
+.bg-good {
+    background-color: #1d7e07;
+}
+
+.text-not-submitted {
+    color: #edd405;
+}
+
+.text-not-production {
+    color: #0c28a4;
+}
+
+.text-not-good {
+    color: #ac1717;
+}
+
+.text-good {
+    color: #1d7e07;
+}
+
+
 /* Extra small devices (phones, 600px and down) */
 @media only screen and (max-width: 600px) {
 

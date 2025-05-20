@@ -163,7 +163,7 @@
         <div class="col-md-6 h-50 d-flex flex-column"> <!-- 50% height -->
             <div class="card h-100">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">Problem Follow Up</h5>
+                    <h5 class="mb-0">List Claim</h5>
                 </div>
                 <div class="overflow-auto" style="max-height: 100%;">
                     <div class="table-responsive">

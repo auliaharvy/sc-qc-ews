@@ -170,7 +170,7 @@
                         </div>
 
                         <div class="card-header bg-info text-white text-center">
-                            <h4 class="mb-0 text-white text-center">Problem Follow Up</h4>
+                            <h4 class="mb-0 text-white text-center">List Claim</h4>
                         </div>
                             <div class="table-responsive">
                                 <table class="table table-bordered table-striped">

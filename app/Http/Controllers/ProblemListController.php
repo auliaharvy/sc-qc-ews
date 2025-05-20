@@ -18,7 +18,7 @@ class ProblemListController extends Controller
 
     public function index(Request $request)
     {
-        $title = 'Problem List';
+        $title = 'List Claim';
         if ($request->ajax()) {
             return $this->problemListService->datatable();
         }
